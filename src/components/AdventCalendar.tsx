@@ -442,12 +442,10 @@ const SeeAllButton = styled(motion.button)`
 `;
 
 const ProfileCard = styled(motion.div)`
-  background: 
-    url('${process.env.PUBLIC_URL}/xmaspaper.webp') center/contain,
-    url('${process.env.PUBLIC_URL}/xmaspaper.png') center/contain,
-    linear-gradient(145deg, #dc2626 0%, #059669 50%, #dc2626 100%);
-  background-size: 166% auto, 166% auto, cover;
-  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-image: url('${process.env.PUBLIC_URL}/xmaspaper.png');
+  background-position: center;
+  background-size: 166% auto;
+  background-repeat: no-repeat;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 16px;
   padding: 20px;
