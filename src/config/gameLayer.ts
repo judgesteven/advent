@@ -2,11 +2,21 @@ import { GameLayerConfig, ClientConfig } from '../types';
 
 // GameLayer configuration - can be set via environment variables or config file
 export const gameLayerConfig: GameLayerConfig = {
-  apiKey: process.env.REACT_APP_GAMELAYER_API_KEY || '',
-  baseUrl: process.env.REACT_APP_GAMELAYER_BASE_URL || 'https://api.gamelayer.io',
+  apiKey: process.env.REACT_APP_GAMELAYER_API_KEY || 'b7fbe484f99ad0917e051e5f193e2d9c',
+  baseUrl: process.env.REACT_APP_GAMELAYER_BASE_URL || 'https://api.gamelayer.co/api/v0',
   gameId: process.env.REACT_APP_GAMELAYER_GAME_ID || '',
   clientId: process.env.REACT_APP_CLIENT_ID || 'default'
 };
+
+// API Headers for GameLayer requests
+export const API_HEADERS = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'api-key': gameLayerConfig.apiKey,
+};
+
+// Account ID for GameLayer
+export const ACCOUNT_ID = 'gl-advent';
 
 // Default client configuration - this will be overridden by GameLayer data
 export const defaultClientConfig: ClientConfig = {

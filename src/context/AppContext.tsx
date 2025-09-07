@@ -8,6 +8,7 @@ type AppAction =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'SET_USER'; payload: User | null }
+  | { type: 'SET_CURRENT_PLAYER'; payload: any | null }
   | { type: 'SET_CALENDAR'; payload: CalendarDay[] }
   | { type: 'SET_LEADERBOARD'; payload: LeaderboardEntry[] }
   | { type: 'SET_REWARDS'; payload: Reward[] }
@@ -23,6 +24,7 @@ type AppAction =
 // Initial state
 const initialState: AppState = {
   user: null,
+  currentPlayer: null,
   calendar: [],
   leaderboard: [],
   rewards: [],
@@ -48,6 +50,8 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
       return { ...state, error: action.payload, isLoading: false };
     case 'SET_USER':
       return { ...state, user: action.payload };
+    case 'SET_CURRENT_PLAYER':
+      return { ...state, currentPlayer: action.payload };
     case 'SET_CALENDAR':
       return { ...state, calendar: action.payload };
     case 'SET_LEADERBOARD':
@@ -108,6 +112,9 @@ interface AppContextType {
     loadInitialData: () => Promise<void>;
     loginUser: (email: string, password: string) => Promise<void>;
     registerUser: (userData: { name: string; email: string; password: string }) => Promise<void>;
+    setCurrentPlayer: (player: any) => void;
+    loadStoredPlayer: () => void;
+    logoutPlayer: () => void;
     openCalendarDay: (day: number) => Promise<void>;
     completeTask: (taskId: string, submission: any) => Promise<void>;
     refreshLeaderboard: () => Promise<void>;
@@ -337,8 +344,34 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     dispatch({ type: 'RESET_MODAL_LEADERBOARD' });
   };
 
+  // Player management functions
+  const setCurrentPlayer = (player: any) => {
+    dispatch({ type: 'SET_CURRENT_PLAYER', payload: player });
+    localStorage.setItem('currentPlayer', JSON.stringify(player));
+  };
+
+  const loadStoredPlayer = () => {
+    const storedPlayer = localStorage.getItem('currentPlayer');
+    if (storedPlayer) {
+      try {
+        const player = JSON.parse(storedPlayer);
+        dispatch({ type: 'SET_CURRENT_PLAYER', payload: player });
+      } catch (error) {
+        console.error('Failed to parse stored player:', error);
+        localStorage.removeItem('currentPlayer');
+      }
+    }
+  };
+
+  const logoutPlayer = () => {
+    dispatch({ type: 'SET_CURRENT_PLAYER', payload: null });
+    dispatch({ type: 'SET_USER', payload: null });
+    localStorage.removeItem('currentPlayer');
+  };
+
   // Load initial data on mount
   useEffect(() => {
+    loadStoredPlayer(); // Load stored player first
     loadInitialData();
   }, []);
 
@@ -348,6 +381,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       loadInitialData,
       loginUser,
       registerUser,
+      setCurrentPlayer,
+      loadStoredPlayer,
+      logoutPlayer,
       openCalendarDay,
       completeTask,
       refreshLeaderboard,

@@ -98,6 +98,7 @@ export interface Reward {
 
 export interface AppState {
   user: User | null;
+  currentPlayer: any | null; // GameLayer player object
   calendar: CalendarDay[];
   leaderboard: LeaderboardEntry[];
   rewards: Reward[];
