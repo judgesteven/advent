@@ -122,11 +122,11 @@ export class GameLayerAPI {
   }
 
   // Leaderboard
-  static async getLeaderboard(limit: number = 50): Promise<LeaderboardEntry[]> {
+  static async getLeaderboard(limit: number = 10, offset: number = 0): Promise<{ entries: LeaderboardEntry[]; hasMore: boolean; total: number }> {
     if (useMockData) {
-      return MockGameLayerAPI.getLeaderboard();
+      return MockGameLayerAPI.getLeaderboard(limit, offset);
     }
-    const response = await api.get(`/leaderboard?limit=${limit}`);
+    const response = await api.get(`/leaderboard?limit=${limit}&offset=${offset}`);
     return response.data;
   }
 

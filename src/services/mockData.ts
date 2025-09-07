@@ -155,69 +155,98 @@ export const generateMockCalendar = (): CalendarDay[] => {
   return calendar;
 };
 
-// Mock leaderboard data
-export const mockLeaderboard: LeaderboardEntry[] = [
-  {
-    rank: 1,
-    user: {
-      id: 'user-2',
-      name: 'Sarah Johnson',
-      email: 'sarah@example.com',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-      totalPoints: 2150,
-      gems: 85,
-      badges: []
-    },
-    points: 2150,
-    completedTasks: 15
-  },
-  {
+// Generate a large mock leaderboard with realistic data
+const generateMockLeaderboard = (): LeaderboardEntry[] => {
+  const firstNames = [
+    'Sarah', 'Mike', 'Emily', 'Alex', 'Jessica', 'David', 'Lisa', 'Chris', 'Amanda', 'Ryan',
+    'Jennifer', 'Kevin', 'Michelle', 'Brian', 'Ashley', 'Jason', 'Stephanie', 'Matthew', 'Nicole', 'Daniel',
+    'Rachel', 'Andrew', 'Megan', 'Joshua', 'Lauren', 'Tyler', 'Samantha', 'Jacob', 'Hannah', 'Nicholas',
+    'Brittany', 'Anthony', 'Kayla', 'William', 'Courtney', 'Jonathan', 'Danielle', 'Brandon', 'Amber', 'Justin',
+    'Rebecca', 'Robert', 'Melissa', 'Zachary', 'Amy', 'Aaron', 'Tiffany', 'Thomas', 'Kimberly', 'Kyle'
+  ];
+  
+  const lastNames = [
+    'Johnson', 'Chen', 'Davis', 'Rodriguez', 'Wilson', 'Martinez', 'Anderson', 'Taylor', 'Thomas', 'Hernandez',
+    'Moore', 'Martin', 'Jackson', 'Thompson', 'White', 'Lopez', 'Lee', 'Gonzalez', 'Harris', 'Clark',
+    'Lewis', 'Robinson', 'Walker', 'Perez', 'Hall', 'Young', 'Allen', 'Sanchez', 'Wright', 'King',
+    'Scott', 'Green', 'Baker', 'Adams', 'Nelson', 'Hill', 'Ramirez', 'Campbell', 'Mitchell', 'Roberts',
+    'Carter', 'Phillips', 'Evans', 'Turner', 'Torres', 'Parker', 'Collins', 'Edwards', 'Stewart', 'Flores'
+  ];
+
+  const avatars = [
+    'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?w=150&h=150&fit=crop&crop=face',
+    'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=150&h=150&fit=crop&crop=face'
+  ];
+
+  const leaderboard: LeaderboardEntry[] = [];
+  
+  // Add our mock user at rank 2
+  leaderboard.push({
     rank: 2,
     user: mockUser,
     points: 1250,
     completedTasks: 8
-  },
-  {
-    rank: 3,
-    user: {
-      id: 'user-3',
-      name: 'Mike Chen',
-      email: 'mike@example.com',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-      totalPoints: 980,
-      gems: 42,
-      badges: []
-    },
-    points: 980,
-    completedTasks: 6
-  },
-  {
-    rank: 4,
-    user: {
-      id: 'user-4',
-      name: 'Emily Davis',
-      email: 'emily@example.com',
-      totalPoints: 750,
-      gems: 28,
-      badges: []
-    },
-    points: 750,
-    completedTasks: 5
-  },
-  {
-    rank: 5,
-    user: {
-      id: 'user-5',
-      name: 'Alex Rodriguez',
-      email: 'alex@example.com',
-      totalPoints: 650,
-      gems: 22,
-      badges: []
-    },
-    points: 650,
-    completedTasks: 4
+  });
+
+  // Generate 299 other users (total 300)
+  for (let i = 0; i < 299; i++) {
+    const rank = i < 1 ? 1 : i + 2; // Skip rank 2 (our user)
+    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+    const name = `${firstName} ${lastName}`;
+    
+    // Generate realistic point distribution (higher ranks have more points)
+    let basePoints: number;
+    if (rank === 1) {
+      basePoints = 2150; // Top player
+    } else if (rank <= 10) {
+      basePoints = Math.floor(Math.random() * 500) + 1000; // Top 10: 1000-1500 points
+    } else if (rank <= 50) {
+      basePoints = Math.floor(Math.random() * 400) + 600; // Top 50: 600-1000 points
+    } else if (rank <= 100) {
+      basePoints = Math.floor(Math.random() * 300) + 300; // Top 100: 300-600 points
+    } else {
+      basePoints = Math.floor(Math.random() * 300) + 50; // Others: 50-350 points
+    }
+
+    const completedTasks = Math.floor(basePoints / 100) + Math.floor(Math.random() * 3);
+    const gems = Math.floor(basePoints / 50) + Math.floor(Math.random() * 10);
+
+    leaderboard.push({
+      rank,
+      user: {
+        id: `user-${i + 3}`,
+        name,
+        email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
+        avatar: avatars[Math.floor(Math.random() * avatars.length)],
+        totalPoints: basePoints,
+        gems,
+        badges: []
+      },
+      points: basePoints,
+      completedTasks
+    });
   }
-];
+
+  // Sort by points descending and update ranks
+  leaderboard.sort((a, b) => b.points - a.points);
+  leaderboard.forEach((entry, index) => {
+    entry.rank = index + 1;
+  });
+
+  return leaderboard;
+};
+
+// Generate the mock leaderboard
+export const mockLeaderboard: LeaderboardEntry[] = generateMockLeaderboard();
 
 // Mock rewards data
 export const mockRewards: Reward[] = [
@@ -411,8 +440,16 @@ export class MockGameLayerAPI {
     };
   }
 
-  static async getLeaderboard(): Promise<LeaderboardEntry[]> {
-    return mockLeaderboard;
+  static async getLeaderboard(limit: number = 10, offset: number = 0): Promise<{ entries: LeaderboardEntry[]; hasMore: boolean; total: number }> {
+    const total = mockLeaderboard.length;
+    const entries = mockLeaderboard.slice(offset, offset + limit);
+    const hasMore = offset + limit < total;
+    
+    return {
+      entries,
+      hasMore,
+      total
+    };
   }
 
   static async getRewards(): Promise<Reward[]> {

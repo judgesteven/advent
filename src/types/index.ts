@@ -105,4 +105,9 @@ export interface AppState {
   currentTask: Task | null;
   isLoading: boolean;
   error: string | null;
+  leaderboardPagination: {
+    hasMore: boolean;
+    total: number;
+    isLoadingMore: boolean;
+  };
 }

@@ -10,6 +10,8 @@ type AppAction =
   | { type: 'SET_USER'; payload: User | null }
   | { type: 'SET_CALENDAR'; payload: CalendarDay[] }
   | { type: 'SET_LEADERBOARD'; payload: LeaderboardEntry[] }
+  | { type: 'APPEND_LEADERBOARD'; payload: LeaderboardEntry[] }
+  | { type: 'SET_LEADERBOARD_PAGINATION'; payload: { hasMore: boolean; total: number; isLoadingMore: boolean } }
   | { type: 'SET_REWARDS'; payload: Reward[] }
   | { type: 'SET_CONFIG'; payload: ClientConfig }
   | { type: 'SET_CURRENT_TASK'; payload: Task | null }
@@ -26,6 +28,11 @@ const initialState: AppState = {
   currentTask: null,
   isLoading: false,
   error: null,
+  leaderboardPagination: {
+    hasMore: false,
+    total: 0,
+    isLoadingMore: false,
+  },
 };
 
 // Reducer
@@ -41,6 +48,10 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
       return { ...state, calendar: action.payload };
     case 'SET_LEADERBOARD':
       return { ...state, leaderboard: action.payload };
+    case 'APPEND_LEADERBOARD':
+      return { ...state, leaderboard: [...state.leaderboard, ...action.payload] };
+    case 'SET_LEADERBOARD_PAGINATION':
+      return { ...state, leaderboardPagination: action.payload };
     case 'SET_REWARDS':
       return { ...state, rewards: action.payload };
     case 'SET_CONFIG':
@@ -83,6 +94,7 @@ interface AppContextType {
     openCalendarDay: (day: number) => Promise<void>;
     completeTask: (taskId: string, submission: any) => Promise<void>;
     refreshLeaderboard: () => Promise<void>;
+    loadMoreLeaderboard: () => Promise<void>;
     trackEvent: (eventName: string, eventData: any) => Promise<void>;
   };
 }
@@ -117,9 +129,17 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       const calendar = await withErrorHandling(() => GameLayerAPI.getCalendarData());
       dispatch({ type: 'SET_CALENDAR', payload: calendar });
 
-      // Load leaderboard
-      const leaderboard = await withErrorHandling(() => GameLayerAPI.getLeaderboard());
-      dispatch({ type: 'SET_LEADERBOARD', payload: leaderboard });
+      // Load leaderboard (first page)
+      const leaderboardData = await withErrorHandling(() => GameLayerAPI.getLeaderboard(10, 0));
+      dispatch({ type: 'SET_LEADERBOARD', payload: leaderboardData.entries });
+      dispatch({ 
+        type: 'SET_LEADERBOARD_PAGINATION', 
+        payload: { 
+          hasMore: leaderboardData.hasMore, 
+          total: leaderboardData.total, 
+          isLoadingMore: false 
+        } 
+      });
 
       // Load rewards
       const rewards = await withErrorHandling(() => GameLayerAPI.getRewards());
@@ -228,10 +248,56 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const refreshLeaderboard = async () => {
     try {
-      const leaderboard = await withErrorHandling(() => GameLayerAPI.getLeaderboard());
-      dispatch({ type: 'SET_LEADERBOARD', payload: leaderboard });
+      const leaderboardData = await withErrorHandling(() => GameLayerAPI.getLeaderboard(10, 0));
+      dispatch({ type: 'SET_LEADERBOARD', payload: leaderboardData.entries });
+      dispatch({ 
+        type: 'SET_LEADERBOARD_PAGINATION', 
+        payload: { 
+          hasMore: leaderboardData.hasMore, 
+          total: leaderboardData.total, 
+          isLoadingMore: false 
+        } 
+      });
     } catch (error: any) {
       console.error('Failed to refresh leaderboard:', error.message);
+    }
+  };
+
+  const loadMoreLeaderboard = async () => {
+    if (state.leaderboardPagination.isLoadingMore || !state.leaderboardPagination.hasMore) {
+      return;
+    }
+
+    try {
+      dispatch({ 
+        type: 'SET_LEADERBOARD_PAGINATION', 
+        payload: { 
+          ...state.leaderboardPagination, 
+          isLoadingMore: true 
+        } 
+      });
+
+      const offset = state.leaderboard.length;
+      const leaderboardData = await withErrorHandling(() => GameLayerAPI.getLeaderboard(10, offset));
+      
+      dispatch({ type: 'APPEND_LEADERBOARD', payload: leaderboardData.entries });
+      dispatch({ 
+        type: 'SET_LEADERBOARD_PAGINATION', 
+        payload: { 
+          hasMore: leaderboardData.hasMore, 
+          total: leaderboardData.total, 
+          isLoadingMore: false 
+        } 
+      });
+    } catch (error: any) {
+      console.error('Failed to load more leaderboard entries:', error.message);
+      dispatch({ 
+        type: 'SET_LEADERBOARD_PAGINATION', 
+        payload: { 
+          ...state.leaderboardPagination, 
+          isLoadingMore: false 
+        } 
+      });
     }
   };
 
@@ -257,6 +323,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       openCalendarDay,
       completeTask,
       refreshLeaderboard,
+      loadMoreLeaderboard,
       trackEvent,
     },
   };
