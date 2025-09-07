@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { User, Trophy, Gift, Calendar, Gem, Zap } from 'lucide-react';
+import { User, Trophy, Gift, Calendar, Gem, Zap, X, ChevronDown } from 'lucide-react';
 import { CalendarDay } from './CalendarDay';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
@@ -200,6 +200,258 @@ const LeaderboardPoints = styled.div`
   flex-shrink: 0;
 `;
 
+
+// Modal Components
+const ModalOverlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+`;
+
+const ModalContent = styled(motion.div)`
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  border: 1px solid #4c1d95;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  position: relative;
+`;
+
+const ModalHeader = styled.div`
+  padding: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const ModalTitle = styled.h2`
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const CloseButton = styled(motion.button)`
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+`;
+
+const ModalBody = styled.div`
+  padding: 0;
+  max-height: 60vh;
+  overflow-y: auto;
+  
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+`;
+
+const ModalLeaderboardEntry = styled(motion.div)<{ $rank: number; $isCurrentUser?: boolean }>`
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.15s ease-out;
+  
+  ${props => props.$isCurrentUser && `
+    background: rgba(139, 92, 246, 0.2);
+    border-color: rgba(139, 92, 246, 0.3);
+  `}
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const ModalRank = styled.div<{ $rank: number }>`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  flex-shrink: 0;
+  
+  ${props => {
+    if (props.$rank === 1) return `
+      background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+      color: #92400e;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+    `;
+    if (props.$rank === 2) return `
+      background: linear-gradient(135deg, #c0c0c0 0%, #e5e7eb 100%);
+      color: #374151;
+      box-shadow: 0 0 15px rgba(192, 192, 192, 0.3);
+    `;
+    if (props.$rank === 3) return `
+      background: linear-gradient(135deg, #cd7f32 0%, #d97706 100%);
+      color: white;
+      box-shadow: 0 0 15px rgba(205, 127, 50, 0.3);
+    `;
+    return `
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    `;
+  }}
+`;
+
+const ModalAvatar = styled.div<{ $hasImage: boolean }>`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  
+  ${props => props.$hasImage ? `
+    background: transparent;
+  ` : `
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+  `}
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`;
+
+const ModalPlayerInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const ModalPlayerName = styled.div`
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const ModalPlayerPoints = styled.div`
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+`;
+
+const ModalLoadMoreButton = styled(motion.button)`
+  width: 100%;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s ease-out;
+  
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const ModalLoadingSpinner = styled.div`
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+const SeeAllButton = styled(motion.button)`
+  width: 100%;
+  padding: 12px 16px;
+  margin-top: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s ease-out;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+  }
+`;
 
 const ProfileCard = styled(motion.div)`
   background: #8b5cf6;
@@ -588,11 +840,22 @@ export const AdventCalendar: React.FC = () => {
   const { state, actions } = useApp();
   const { config } = useTheme();
   const { calendar, leaderboard, rewards, user, isLoading, error } = state;
+  const [isLeaderboardModalOpen, setIsLeaderboardModalOpen] = useState(false);
 
   const today = new Date();
   const currentDay = today.getDate();
   const currentMonth = today.getMonth() + 1; // December is month 12
   const isDecember = currentMonth === 12;
+
+  const handleOpenLeaderboardModal = async () => {
+    setIsLeaderboardModalOpen(true);
+    await actions.loadModalLeaderboard();
+  };
+
+  const handleCloseLeaderboardModal = () => {
+    setIsLeaderboardModalOpen(false);
+    actions.resetModalLeaderboard();
+  };
 
   const completedDays = calendar.filter(day => day.isCompleted).length;
   const totalDays = calendar.length;
@@ -690,7 +953,104 @@ export const AdventCalendar: React.FC = () => {
             </LeaderboardCard>
           ))}
         </LeaderboardScroll>
+        <SeeAllButton
+          onClick={handleOpenLeaderboardModal}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <Trophy size={16} />
+          See All Players
+        </SeeAllButton>
       </HorizontalLeaderboard>
+    );
+  };
+
+  const LeaderboardModal = () => {
+    const { modalLeaderboard, modalLeaderboardPagination } = state;
+
+    if (!isLeaderboardModalOpen) return null;
+
+    const handleLoadMore = () => {
+      actions.loadMoreModalLeaderboard();
+    };
+
+    return (
+      <ModalOverlay
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={handleCloseLeaderboardModal}
+      >
+        <ModalContent
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ModalHeader>
+            <ModalTitle>
+              <Trophy size={24} />
+              Full Leaderboard
+            </ModalTitle>
+            <CloseButton
+              onClick={handleCloseLeaderboardModal}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <X size={20} />
+            </CloseButton>
+          </ModalHeader>
+          
+          <ModalBody>
+            {modalLeaderboard.map((entry, index) => (
+              <ModalLeaderboardEntry
+                key={entry.user.id}
+                $rank={entry.rank}
+                $isCurrentUser={user?.id === entry.user.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: Math.min(index, 10) * 0.05 }}
+              >
+                <ModalRank $rank={entry.rank}>
+                  {entry.rank}
+                </ModalRank>
+                <ModalAvatar $hasImage={!!entry.user.avatar}>
+                  {entry.user.avatar ? (
+                    <img src={entry.user.avatar} alt={entry.user.name} />
+                  ) : (
+                    <User size={20} />
+                  )}
+                </ModalAvatar>
+                <ModalPlayerInfo>
+                  <ModalPlayerName>{entry.user.name}</ModalPlayerName>
+                  <ModalPlayerPoints>{entry.points.toLocaleString()} points</ModalPlayerPoints>
+                </ModalPlayerInfo>
+              </ModalLeaderboardEntry>
+            ))}
+            
+            {modalLeaderboardPagination.hasMore && (
+              <ModalLoadMoreButton
+                onClick={handleLoadMore}
+                disabled={modalLeaderboardPagination.isLoadingMore}
+                whileHover={{ scale: modalLeaderboardPagination.isLoadingMore ? 1 : 1.02 }}
+                whileTap={{ scale: modalLeaderboardPagination.isLoadingMore ? 1 : 0.98 }}
+              >
+                {modalLeaderboardPagination.isLoadingMore ? (
+                  <>
+                    <ModalLoadingSpinner />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown size={16} />
+                    Load More ({modalLeaderboardPagination.total - modalLeaderboard.length} remaining)
+                  </>
+                )}
+              </ModalLoadMoreButton>
+            )}
+          </ModalBody>
+        </ModalContent>
+      </ModalOverlay>
     );
   };
 
@@ -881,6 +1241,8 @@ export const AdventCalendar: React.FC = () => {
           </p>
         </motion.div>
       )}
+      
+      <LeaderboardModal />
     </CalendarContainer>
   );
 };

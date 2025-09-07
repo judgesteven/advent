@@ -105,4 +105,12 @@ export interface AppState {
   currentTask: Task | null;
   isLoading: boolean;
   error: string | null;
+  // Modal leaderboard state (separate from main leaderboard)
+  modalLeaderboard: LeaderboardEntry[];
+  modalLeaderboardPagination: {
+    hasMore: boolean;
+    total: number;
+    isLoadingMore: boolean;
+    currentPage: number;
+  };
 }

@@ -14,7 +14,11 @@ type AppAction =
   | { type: 'SET_CONFIG'; payload: ClientConfig }
   | { type: 'SET_CURRENT_TASK'; payload: Task | null }
   | { type: 'UPDATE_CALENDAR_DAY'; payload: { day: number; updates: Partial<CalendarDay> } }
-  | { type: 'UPDATE_USER_PROGRESS'; payload: { points: number; gems: number; badges: any[] } };
+  | { type: 'UPDATE_USER_PROGRESS'; payload: { points: number; gems: number; badges: any[] } }
+  | { type: 'SET_MODAL_LEADERBOARD'; payload: LeaderboardEntry[] }
+  | { type: 'APPEND_MODAL_LEADERBOARD'; payload: LeaderboardEntry[] }
+  | { type: 'SET_MODAL_LEADERBOARD_PAGINATION'; payload: { hasMore: boolean; total: number; isLoadingMore: boolean; currentPage: number } }
+  | { type: 'RESET_MODAL_LEADERBOARD' };
 
 // Initial state
 const initialState: AppState = {
@@ -26,6 +30,13 @@ const initialState: AppState = {
   currentTask: null,
   isLoading: false,
   error: null,
+  modalLeaderboard: [],
+  modalLeaderboardPagination: {
+    hasMore: false,
+    total: 0,
+    isLoadingMore: false,
+    currentPage: 0,
+  },
 };
 
 // Reducer
@@ -68,6 +79,23 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
             }
           : null,
       };
+    case 'SET_MODAL_LEADERBOARD':
+      return { ...state, modalLeaderboard: action.payload };
+    case 'APPEND_MODAL_LEADERBOARD':
+      return { ...state, modalLeaderboard: [...state.modalLeaderboard, ...action.payload] };
+    case 'SET_MODAL_LEADERBOARD_PAGINATION':
+      return { ...state, modalLeaderboardPagination: action.payload };
+    case 'RESET_MODAL_LEADERBOARD':
+      return { 
+        ...state, 
+        modalLeaderboard: [],
+        modalLeaderboardPagination: {
+          hasMore: false,
+          total: 0,
+          isLoadingMore: false,
+          currentPage: 0,
+        }
+      };
     default:
       return state;
   }
@@ -84,6 +112,9 @@ interface AppContextType {
     completeTask: (taskId: string, submission: any) => Promise<void>;
     refreshLeaderboard: () => Promise<void>;
     trackEvent: (eventName: string, eventData: any) => Promise<void>;
+    loadModalLeaderboard: () => Promise<void>;
+    loadMoreModalLeaderboard: () => Promise<void>;
+    resetModalLeaderboard: () => void;
   };
 }
 
@@ -244,6 +275,68 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   };
 
+  const loadModalLeaderboard = async () => {
+    try {
+      dispatch({ type: 'RESET_MODAL_LEADERBOARD' });
+      const leaderboardData = await withErrorHandling(() => GameLayerAPI.getLeaderboard(10, 0));
+      dispatch({ type: 'SET_MODAL_LEADERBOARD', payload: leaderboardData.entries });
+      dispatch({ 
+        type: 'SET_MODAL_LEADERBOARD_PAGINATION', 
+        payload: { 
+          hasMore: leaderboardData.hasMore, 
+          total: leaderboardData.total, 
+          isLoadingMore: false,
+          currentPage: 1
+        } 
+      });
+    } catch (error: any) {
+      console.error('Failed to load modal leaderboard:', error.message);
+    }
+  };
+
+  const loadMoreModalLeaderboard = async () => {
+    if (state.modalLeaderboardPagination.isLoadingMore || !state.modalLeaderboardPagination.hasMore) {
+      return;
+    }
+
+    try {
+      dispatch({ 
+        type: 'SET_MODAL_LEADERBOARD_PAGINATION', 
+        payload: { 
+          ...state.modalLeaderboardPagination, 
+          isLoadingMore: true 
+        } 
+      });
+
+      const offset = state.modalLeaderboard.length;
+      const leaderboardData = await withErrorHandling(() => GameLayerAPI.getLeaderboard(10, offset));
+      
+      dispatch({ type: 'APPEND_MODAL_LEADERBOARD', payload: leaderboardData.entries });
+      dispatch({ 
+        type: 'SET_MODAL_LEADERBOARD_PAGINATION', 
+        payload: { 
+          hasMore: leaderboardData.hasMore, 
+          total: leaderboardData.total, 
+          isLoadingMore: false,
+          currentPage: state.modalLeaderboardPagination.currentPage + 1
+        } 
+      });
+    } catch (error: any) {
+      console.error('Failed to load more modal leaderboard entries:', error.message);
+      dispatch({ 
+        type: 'SET_MODAL_LEADERBOARD_PAGINATION', 
+        payload: { 
+          ...state.modalLeaderboardPagination, 
+          isLoadingMore: false 
+        } 
+      });
+    }
+  };
+
+  const resetModalLeaderboard = () => {
+    dispatch({ type: 'RESET_MODAL_LEADERBOARD' });
+  };
+
   // Load initial data on mount
   useEffect(() => {
     loadInitialData();
@@ -259,6 +352,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       completeTask,
       refreshLeaderboard,
       trackEvent,
+      loadModalLeaderboard,
+      loadMoreModalLeaderboard,
+      resetModalLeaderboard,
     },
   };
 
