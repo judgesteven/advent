@@ -442,10 +442,11 @@ const SeeAllButton = styled(motion.button)`
 `;
 
 const ProfileCard = styled(motion.div)`
-  background-image: url('${process.env.PUBLIC_URL}/xmaspaper.png');
+  background-image: url('/xmaspaper.png');
   background-position: center;
   background-size: 166% auto;
   background-repeat: no-repeat;
+  background-color: #8B5CF6;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 16px;
   padding: 20px;
