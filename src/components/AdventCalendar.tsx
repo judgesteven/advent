@@ -5,6 +5,7 @@ import { User, Trophy, Gift, Calendar, Gem, Zap, X, ChevronDown } from 'lucide-r
 import { CalendarDay } from './CalendarDay';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
+import xmasPaperImg from '../assets/xmaspaper.png';
 
 
 const CalendarContainer = styled.div`
@@ -442,11 +443,8 @@ const SeeAllButton = styled(motion.button)`
 `;
 
 const ProfileCard = styled(motion.div)`
-  background-image: url('/xmaspaper.png');
-  background-position: center;
+  background: url(${xmasPaperImg}) center/contain no-repeat #8B5CF6;
   background-size: 166% auto;
-  background-repeat: no-repeat;
-  background-color: #8B5CF6;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 16px;
   padding: 20px;
