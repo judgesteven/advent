@@ -1,25 +1,21 @@
 {
-  "short_name": "Advent Calendar",
-  "name": "Gamified Advent Calendar",
+  "short_name": "GameLayer Advent",
+  "name": "GameLayer Advent Calendar - Interactive Christmas Campaign",
+  "description": "Experience the ultimate gamified Christmas advent calendar with daily tasks, badges, leaderboards, and amazing prizes!",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "logo192.png",
+      "src": "logo.png",
+      "sizes": "any",
       "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
+      "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "orientation": "portrait-primary",
+  "theme_color": "#8B5CF6",
+  "background_color": "#ffffff",
+  "categories": ["games", "entertainment", "lifestyle"],
+  "lang": "en",
+  "scope": "/"
 }
