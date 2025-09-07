@@ -114,6 +114,7 @@ interface AppContextType {
     registerUser: (userData: { name: string; email: string; password: string }) => Promise<void>;
     setCurrentPlayer: (player: any) => void;
     loadStoredPlayer: () => void;
+    loadRealPlayerData: (playerId: string) => Promise<void>;
     logoutPlayer: () => void;
     openCalendarDay: (day: number) => Promise<void>;
     completeTask: (taskId: string, submission: any) => Promise<void>;
@@ -163,14 +164,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       const rewards = await withErrorHandling(() => GameLayerAPI.getRewards());
       dispatch({ type: 'SET_REWARDS', payload: rewards });
 
-      // Load current user (mock data defaults to authenticated)
-      try {
-        const user = await withErrorHandling(() => GameLayerAPI.getCurrentUser());
-        dispatch({ type: 'SET_USER', payload: user });
-      } catch (error) {
-        // User not authenticated, continue without user data
-        console.log('User not authenticated:', error);
-      }
+      // No longer load mock user data - we use real GameLayer players only
+      dispatch({ type: 'SET_USER', payload: null });
 
       dispatch({ type: 'SET_LOADING', payload: false });
     } catch (error: any) {
@@ -179,29 +174,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   const loginUser = async (email: string, password: string) => {
-    dispatch({ type: 'SET_LOADING', payload: true });
-    try {
-      const user = await withErrorHandling(() => GameLayerAPI.loginUser(email, password));
-      dispatch({ type: 'SET_USER', payload: user });
-      dispatch({ type: 'SET_LOADING', payload: false });
-      
-      // Reload calendar with user progress
-      const calendar = await withErrorHandling(() => GameLayerAPI.getCalendarData());
-      dispatch({ type: 'SET_CALENDAR', payload: calendar });
-    } catch (error: any) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
-    }
+    // This function is deprecated - we use real GameLayer player sign-in instead
+    console.log('loginUser is deprecated - use GameLayer player sign-in');
   };
 
   const registerUser = async (userData: { name: string; email: string; password: string }) => {
-    dispatch({ type: 'SET_LOADING', payload: true });
-    try {
-      const user = await withErrorHandling(() => GameLayerAPI.registerUser(userData));
-      dispatch({ type: 'SET_USER', payload: user });
-      dispatch({ type: 'SET_LOADING', payload: false });
-    } catch (error: any) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
-    }
+    // This function is deprecated - we use real GameLayer player creation instead
+    console.log('registerUser is deprecated - use GameLayer player creation');
   };
 
   const openCalendarDay = async (day: number) => {
@@ -356,10 +335,35 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       try {
         const player = JSON.parse(storedPlayer);
         dispatch({ type: 'SET_CURRENT_PLAYER', payload: player });
+        // Load fresh player data from API
+        if (player.player) {
+          loadRealPlayerData(player.player);
+        }
+        return player; // Return the player so we know one exists
       } catch (error) {
         console.error('Failed to parse stored player:', error);
         localStorage.removeItem('currentPlayer');
       }
+    }
+    return null; // No stored player
+  };
+
+  const loadRealPlayerData = async (playerId: string) => {
+    try {
+      console.log('Loading real player data for:', playerId);
+      const realPlayerData = await GameLayerAPI.getPlayer(playerId);
+      console.log('Real player data loaded:', realPlayerData);
+      console.log('Player image data:', {
+        imgUrl: realPlayerData.imgUrl,
+        image: realPlayerData.image,
+        avatar: realPlayerData.avatar,
+        hasAnyImage: !!(realPlayerData.imgUrl || realPlayerData.image || realPlayerData.avatar)
+      });
+      dispatch({ type: 'SET_CURRENT_PLAYER', payload: realPlayerData });
+      // Update localStorage with fresh data
+      localStorage.setItem('currentPlayer', JSON.stringify(realPlayerData));
+    } catch (error) {
+      console.error('Error loading real player data:', error);
     }
   };
 
@@ -371,8 +375,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   // Load initial data on mount
   useEffect(() => {
-    loadStoredPlayer(); // Load stored player first
-    loadInitialData();
+    const initializeApp = async () => {
+      const storedPlayer = loadStoredPlayer(); // Load stored player first (synchronous)
+      console.log('Stored player found:', !!storedPlayer);
+      await loadInitialData(); // Then load initial data (no mock user data)
+    };
+    
+    initializeApp();
   }, []);
 
   const contextValue: AppContextType = {
@@ -383,6 +392,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       registerUser,
       setCurrentPlayer,
       loadStoredPlayer,
+      loadRealPlayerData,
       logoutPlayer,
       openCalendarDay,
       completeTask,

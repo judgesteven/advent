@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { User, Mail } from 'lucide-react';
+import { User, Mail, ChevronDown, LogOut } from 'lucide-react';
 import { ThemeProvider } from './context/ThemeContext';
 import { AppProvider, useApp } from './context/AppContext';
 import { AdventCalendar } from './components/AdventCalendar';
 import { TaskModal } from './components/TaskModal';
+import { SignInModal } from './components/SignInModal';
 import './utils/clientSwitcher';
 
 const GlobalStyle = createGlobalStyle`
@@ -257,6 +258,57 @@ const CompactUserName = styled.div`
   line-height: 1;
 `;
 
+const UserDropdown = styled.div`
+  position: relative;
+  display: inline-block;
+`;
+
+const DropdownMenu = styled(motion.div)`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+  min-width: 160px;
+  z-index: 1000;
+  overflow: hidden;
+`;
+
+const DropdownItem = styled.button`
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #f3f4f6;
+  }
+
+  &:last-child {
+    color: #dc2626;
+  }
+
+  &:last-child:hover {
+    background-color: #fef2f2;
+  }
+`;
+
+const DropdownArrow = styled(ChevronDown)`
+  margin-left: 4px;
+  transition: transform 0.2s;
+  font-size: 12px;
+`;
+
 
 const MainContent = styled.main`
   flex: 1;
@@ -281,8 +333,10 @@ const queryClient = new QueryClient({
 });
 
 const AppContent: React.FC = () => {
-  const { state } = useApp();
+  const { state, actions } = useApp();
   const [showTaskModal, setShowTaskModal] = useState(false);
+  const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Show task modal when currentTask is set
   useEffect(() => {
@@ -295,16 +349,37 @@ const AppContent: React.FC = () => {
     setShowTaskModal(false);
   };
 
+  const handleOpenSignInModal = () => {
+    setIsSignInModalOpen(true);
+  };
+
+  const handleCloseSignInModal = () => {
+    setIsSignInModalOpen(false);
+  };
+
+  const handlePlayerCreated = async (player: any) => {
+    // Set the initial player data
+    actions.setCurrentPlayer(player);
+    // Load fresh real player data from GameLayer API
+    if (player.player) {
+      await actions.loadRealPlayerData(player.player);
+    }
+    // Reload initial data to clear mock user and refresh with real player context
+    await actions.loadInitialData();
+  };
+
   const CompactUserProfileComponent = () => {
-    const { user } = state;
+    const { user, currentPlayer } = state;
     
-    if (!user) {
+    if (!currentPlayer) {
       return (
         <CompactUserProfile
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          onClick={handleOpenSignInModal}
+          style={{ cursor: 'pointer' }}
         >
           <CompactAvatar $hasImage={false}>
             <User size={16} />
@@ -316,24 +391,54 @@ const AppContent: React.FC = () => {
       );
     }
 
+    const displayUser = user || currentPlayer;
+    
     return (
-      <CompactUserProfile
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <CompactAvatar $hasImage={!!user.avatar}>
-          {user.avatar ? (
-            <img src={user.avatar} alt={user.name} />
-          ) : (
-            <User size={16} />
-          )}
-        </CompactAvatar>
-        <CompactUserInfo>
-          <CompactUserName>{user.name}</CompactUserName>
-        </CompactUserInfo>
-      </CompactUserProfile>
+      <UserDropdown>
+        <CompactUserProfile
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          style={{ cursor: 'pointer' }}
+        >
+          <CompactAvatar $hasImage={!!(displayUser.imgUrl || displayUser.avatar || displayUser.image)}>
+            {(displayUser.imgUrl || displayUser.avatar || displayUser.image) ? (
+              <img src={displayUser.imgUrl || displayUser.avatar || displayUser.image} alt={displayUser.name} />
+            ) : (
+              <User size={16} />
+            )}
+          </CompactAvatar>
+          <CompactUserInfo>
+            <CompactUserName>{displayUser.name}</CompactUserName>
+            <DropdownArrow size={12} />
+          </CompactUserInfo>
+        </CompactUserProfile>
+        
+        {isDropdownOpen && (
+          <DropdownMenu
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <DropdownItem onClick={() => {
+              setIsDropdownOpen(false);
+              // Add profile/settings action here if needed
+            }}>
+              <User size={16} />
+              Profile
+            </DropdownItem>
+            <DropdownItem onClick={() => {
+              setIsDropdownOpen(false);
+              actions.logoutPlayer();
+            }}>
+              <LogOut size={16} />
+              Sign Out
+            </DropdownItem>
+          </DropdownMenu>
+        )}
+      </UserDropdown>
     );
   };
 
@@ -370,6 +475,12 @@ const AppContent: React.FC = () => {
         task={state.currentTask}
         isOpen={showTaskModal}
         onClose={handleCloseTaskModal}
+      />
+      
+      <SignInModal
+        isOpen={isSignInModalOpen}
+        onClose={handleCloseSignInModal}
+        onPlayerCreated={handlePlayerCreated}
       />
     </AppContainer>
   );

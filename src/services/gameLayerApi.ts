@@ -9,35 +9,25 @@ const api = axios.create({
   headers: API_HEADERS
 });
 
-// Check if we should use mock data (when API key is not provided or in development)
-// Temporarily using mock data during development - set to false when ready for production API
-const useMockData = true; // !gameLayerConfig.apiKey || gameLayerConfig.apiKey === '' || process.env.NODE_ENV === 'development';
+// Check if we should use mock data (when API key is not provided)
+const useMockData = !gameLayerConfig.apiKey || gameLayerConfig.apiKey === '';
 
 // API service class for GameLayer integration
 export class GameLayerAPI {
   // User Management
   static async getCurrentUser(): Promise<User> {
-    if (useMockData) {
-      return MockGameLayerAPI.getCurrentUser();
-    }
-    const response = await api.get('/user/profile');
-    return response.data;
+    // Always use mock data for current user since we're focusing on player creation
+    return MockGameLayerAPI.getCurrentUser();
   }
 
   static async loginUser(email: string, password: string): Promise<User> {
-    if (useMockData) {
-      return MockGameLayerAPI.loginUser(email, password);
-    }
-    const response = await api.post('/auth/login', { email, password });
-    return response.data;
+    // Always use mock data for login since we're focusing on player creation
+    return MockGameLayerAPI.loginUser(email, password);
   }
 
   static async registerUser(userData: { name: string; email: string; password: string }): Promise<User> {
-    if (useMockData) {
-      return MockGameLayerAPI.registerUser(userData);
-    }
-    const response = await api.post('/auth/register', userData);
-    return response.data;
+    // Always use mock data for registration since we're focusing on player creation
+    return MockGameLayerAPI.registerUser(userData);
   }
 
   static async updateUserProfile(updates: Partial<User>): Promise<User> {
@@ -52,123 +42,104 @@ export class GameLayerAPI {
 
   // Client Configuration
   static async getClientConfig(): Promise<ClientConfig> {
-    if (useMockData) {
-      return MockGameLayerAPI.getClientConfig();
-    }
-    const response = await api.get(`/clients/${gameLayerConfig.clientId}/config`);
-    return response.data;
+    // Always use mock data for client config since this endpoint doesn't exist in GameLayer
+    return MockGameLayerAPI.getClientConfig();
   }
 
   // Calendar and Tasks
   static async getCalendarData(year: number = 2024, month: number = 12): Promise<CalendarDay[]> {
-    if (useMockData) {
-      return MockGameLayerAPI.getCalendarData();
-    }
-    const response = await api.get(`/calendar/${year}/${month}`);
-    return response.data;
+    // Always use mock data for calendar since we're focusing on player creation
+    return MockGameLayerAPI.getCalendarData();
   }
 
   static async getTaskForDay(day: number): Promise<Task> {
-    if (useMockData) {
-      return MockGameLayerAPI.getTaskForDay(day);
-    }
-    const response = await api.get(`/tasks/day/${day}`);
-    return response.data;
+    // Always use mock data for tasks since we're focusing on player creation
+    return MockGameLayerAPI.getTaskForDay(day);
   }
 
   static async submitTaskCompletion(taskId: string, submission: any): Promise<{ success: boolean; points: number; badge?: Badge; gems: number }> {
-    if (useMockData) {
-      return MockGameLayerAPI.submitTaskCompletion(taskId, submission);
-    }
-    const response = await api.post(`/tasks/${taskId}/complete`, { submission });
-    return response.data;
+    // Always use mock data for task completion since we're focusing on player creation
+    return MockGameLayerAPI.submitTaskCompletion(taskId, submission);
   }
 
   static async getUserProgress(): Promise<{ completedDays: number[]; totalPoints: number; badges: Badge[]; gems: number }> {
-    if (useMockData) {
-      const user = await this.getCurrentUser();
-      return {
-        completedDays: [1, 2, 3], // Mock completed days
-        totalPoints: user.totalPoints,
-        badges: user.badges,
-        gems: user.gems
-      };
-    }
-    const response = await api.get('/user/progress');
-    return response.data;
+    // Always use mock data for user progress since we're focusing on player creation
+    const user = await this.getCurrentUser();
+    return {
+      completedDays: [1, 2, 3], // Mock completed days
+      totalPoints: user.totalPoints,
+      badges: user.badges,
+      gems: user.gems
+    };
   }
 
   // Badges and Achievements
   static async getUserBadges(): Promise<Badge[]> {
-    if (useMockData) {
-      const user = await this.getCurrentUser();
-      return user.badges;
-    }
-    const response = await api.get('/user/badges');
-    return response.data;
+    // Always use mock data since we're focusing on player creation
+    const user = await this.getCurrentUser();
+    return user.badges;
   }
 
   static async getAllBadges(): Promise<Badge[]> {
-    if (useMockData) {
-      const user = await this.getCurrentUser();
-      return user.badges;
-    }
-    const response = await api.get('/badges');
-    return response.data;
+    // Always use mock data since we're focusing on player creation
+    const user = await this.getCurrentUser();
+    return user.badges;
   }
 
   // Leaderboard
   static async getLeaderboard(limit: number = 10, offset: number = 0): Promise<{ entries: LeaderboardEntry[]; hasMore: boolean; total: number }> {
-    if (useMockData) {
-      return MockGameLayerAPI.getLeaderboard(limit, offset);
-    }
-    const response = await api.get(`/leaderboard?limit=${limit}&offset=${offset}`);
-    return response.data;
+    // Always use mock data since we're focusing on player creation
+    return MockGameLayerAPI.getLeaderboard(limit, offset);
   }
 
   static async getUserRank(): Promise<{ rank: number; totalUsers: number }> {
-    if (useMockData) {
-      return { rank: 2, totalUsers: 150 }; // Mock rank
-    }
-    const response = await api.get('/user/rank');
-    return response.data;
+    // Always use mock data since we're focusing on player creation
+    return { rank: 2, totalUsers: 150 }; // Mock rank
   }
 
   // Rewards
   static async getRewards(): Promise<Reward[]> {
-    if (useMockData) {
-      return MockGameLayerAPI.getRewards();
-    }
-    const response = await api.get('/rewards');
-    return response.data;
+    // Always use mock data since we're focusing on player creation
+    return MockGameLayerAPI.getRewards();
   }
 
   static async purchaseReward(rewardId: string): Promise<{ success: boolean; message: string }> {
-    if (useMockData) {
-      return MockGameLayerAPI.purchaseReward(rewardId);
+    // Always use mock data since we're focusing on player creation
+    return MockGameLayerAPI.purchaseReward(rewardId);
+  }
+
+  // Real player data fetching
+  static async getPlayer(playerId: string): Promise<any> {
+    try {
+      const response = await fetch(`${gameLayerConfig.baseUrl}/players/${playerId}?account=${ACCOUNT_ID}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'api-key': gameLayerConfig.apiKey,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch player: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching player:', error);
+      throw error;
     }
-    const response = await api.post('/rewards/purchase', { rewardId });
-    return response.data;
   }
 
   // Analytics and Events
   static async trackEvent(eventName: string, eventData: any): Promise<void> {
-    if (useMockData) {
-      return MockGameLayerAPI.trackEvent(eventName, eventData);
-    }
-    await api.post('/analytics/track', {
-      event: eventName,
-      data: eventData,
-      timestamp: new Date().toISOString()
-    });
+    // Always use mock data since we're focusing on player creation
+    return MockGameLayerAPI.trackEvent(eventName, eventData);
   }
 
   static async getDailyStats(): Promise<{ totalUsers: number; activeToday: number; tasksCompleted: number }> {
-    if (useMockData) {
-      return { totalUsers: 150, activeToday: 45, tasksCompleted: 89 };
-    }
-    const response = await api.get('/analytics/daily-stats');
-    return response.data;
+    // Always use mock data since we're focusing on player creation
+    return { totalUsers: 150, activeToday: 45, tasksCompleted: 89 };
   }
 }
 

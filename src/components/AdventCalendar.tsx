@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { User, Trophy, Gift, Calendar, Gem, Zap, X, ChevronDown } from 'lucide-react';
 import { CalendarDay } from './CalendarDay';
-import { SignInModal } from './SignInModal';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import xmasPaperImg from '../assets/xmaspaper.png';
@@ -528,28 +527,57 @@ const ProfileCard = styled(motion.div)`
 `;
 
 const ProfileAvatar = styled.div<{ $hasImage: boolean }>`
-  width: 200px;
-  height: 200px;
+  width: 195px;
+  height: 195px;
   border-radius: 50%;
-  background: ${props => props.$hasImage ? 'none' : 'rgba(255, 255, 255, 0.2)'};
+  background: ${props => props.$hasImage ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'};
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 5px solid rgba(255, 255, 255, 0.3);
+  border: 8px solid rgba(255, 255, 255, 0.3);
   flex-shrink: 0;
   margin: 0 auto 16px auto;
+  position: relative;
   
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    position: relative;
+    z-index: 2;
+    background-color: #f3f4f6; /* Light grey background for transparent images */
   }
   
   svg {
     width: 64px;
     height: 64px;
     color: white;
+    z-index: 1;
+  }
+`;
+
+const PlaceholderAvatar = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: white;
+  font-weight: 600;
+  font-size: 24px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  z-index: 1;
+  
+  .initials {
+    font-size: 36px;
+    margin-bottom: 4px;
+  }
+  
+  .label {
+    font-size: 12px;
+    opacity: 0.8;
   }
 `;
 
@@ -935,7 +963,6 @@ export const AdventCalendar: React.FC = () => {
   const { config } = useTheme();
   const { calendar, leaderboard, rewards, user, currentPlayer, isLoading, error } = state;
   const [isLeaderboardModalOpen, setIsLeaderboardModalOpen] = useState(false);
-  const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
 
   const today = new Date();
   const currentDay = today.getDate();
@@ -952,20 +979,6 @@ export const AdventCalendar: React.FC = () => {
     actions.resetModalLeaderboard();
   };
 
-  const handleOpenSignInModal = () => {
-    setIsSignInModalOpen(true);
-  };
-
-  const handleCloseSignInModal = () => {
-    setIsSignInModalOpen(false);
-  };
-
-  const handlePlayerCreated = (player: any) => {
-    actions.setCurrentPlayer(player);
-    // Optionally reload data with new player context
-    actions.loadInitialData();
-  };
-
   const completedDays = calendar.filter(day => day.isCompleted).length;
   const totalDays = calendar.length;
 
@@ -977,7 +990,7 @@ export const AdventCalendar: React.FC = () => {
   };
 
   const ProfileCardComponent = () => {
-    // Show sign-in prompt if no current player
+    // Show sign-in banner if no current player
     if (!currentPlayer) {
       return (
         <ProfileCard
@@ -985,32 +998,45 @@ export const AdventCalendar: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <ProfileName>Welcome!</ProfileName>
-          <ProfileAvatar $hasImage={false}>
-            <User size={64} />
-          </ProfileAvatar>
-          <SignInButton onClick={handleOpenSignInModal}>
-            Join the Adventure
-          </SignInButton>
-          <ProfileInfo>
-            <div style={{ textAlign: 'center', color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px' }}>
-              Create your player profile to start collecting gems and climbing the leaderboard!
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            height: '100%',
+            padding: '20px',
+            textAlign: 'center'
+          }}>
+            <div style={{ 
+              background: 'rgba(139, 92, 246, 0.9)',
+              color: 'white', 
+              fontSize: '18px',
+              fontWeight: '500',
+              padding: '16px 24px',
+              borderRadius: '20px',
+              border: '2px solid rgba(255, 255, 255, 0.2)',
+              backdropFilter: 'blur(10px)',
+              boxShadow: '0 8px 32px rgba(139, 92, 246, 0.3)'
+            }}>
+              Sign-in above to start your adventure
             </div>
-          </ProfileInfo>
+          </div>
         </ProfileCard>
       );
     }
 
-    // Show profile card with current player data
+    // Show profile card with real GameLayer player data
     const displayUser = user || {
       name: currentPlayer.name || 'Player',
-      avatar: currentPlayer.image || null,
-      totalPoints: 0,
-      gems: 0,
+      avatar: currentPlayer.imgUrl || currentPlayer.image || null, // Use imgUrl from GameLayer API
+      totalPoints: currentPlayer.points || 0, // Use points from GameLayer API
+      gems: currentPlayer.credits || 0, // Use credits as gems from GameLayer API
       badges: []
     };
     
-    const userRank = user ? (leaderboard.find(entry => entry.user.id === user.id)?.rank || '?') : '?';
+    // Find current player's rank in leaderboard using their player ID
+    const currentPlayerRank = currentPlayer?.player ? 
+      (leaderboard.find(entry => entry.user.id === currentPlayer.player)?.rank || '?') : '?';
+    const userRank = user ? (leaderboard.find(entry => entry.user.id === user.id)?.rank || '?') : currentPlayerRank;
 
     return (
       <ProfileCard
@@ -1023,7 +1049,12 @@ export const AdventCalendar: React.FC = () => {
           {displayUser.avatar ? (
             <img src={displayUser.avatar} alt={displayUser.name} />
           ) : (
-            <User size={64} />
+            <PlaceholderAvatar>
+              <div className="initials">
+                {displayUser.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
+              </div>
+              <div className="label">Player</div>
+            </PlaceholderAvatar>
           )}
         </ProfileAvatar>
         <RankingBadge>
@@ -1042,9 +1073,6 @@ export const AdventCalendar: React.FC = () => {
             </ProfileBadge>
           </ProfileBadges>
         </ProfileInfo>
-        <LogoutButton onClick={actions.logoutPlayer}>
-          Sign Out
-        </LogoutButton>
       </ProfileCard>
     );
   };
@@ -1383,12 +1411,6 @@ export const AdventCalendar: React.FC = () => {
       )}
       
       <LeaderboardModal />
-      
-      <SignInModal
-        isOpen={isSignInModalOpen}
-        onClose={handleCloseSignInModal}
-        onPlayerCreated={handlePlayerCreated}
-      />
     </CalendarContainer>
   );
 };

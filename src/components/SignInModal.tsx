@@ -10,6 +10,8 @@ interface SignInModalProps {
   onPlayerCreated: (player: any) => void;
 }
 
+type ModalMode = 'signin' | 'create';
+
 interface PlayerData {
   name: string;
   email: string;
@@ -70,6 +72,31 @@ const ModalTitle = styled.h2`
   color: #1f2937;
   margin: 0 0 8px 0;
   text-align: center;
+`;
+
+const TabContainer = styled.div`
+  display: flex;
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 4px;
+  margin-bottom: 24px;
+`;
+
+const Tab = styled.button<{ $active: boolean }>`
+  flex: 1;
+  padding: 8px 16px;
+  background: ${props => props.$active ? '#8b5cf6' : 'transparent'};
+  color: ${props => props.$active ? 'white' : '#6b7280'};
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: ${props => props.$active ? '#7c3aed' : '#e5e7eb'};
+  }
 `;
 
 const ModalSubtitle = styled.p`
@@ -189,6 +216,7 @@ const ErrorMessage = styled.div`
 `;
 
 export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPlayerCreated }) => {
+  const [mode, setMode] = useState<ModalMode>('signin');
   const [playerData, setPlayerData] = useState<PlayerData>({
     name: '',
     email: '',
@@ -217,76 +245,140 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPla
     }
   };
 
+  const convertImageToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
+        } else {
+          reject(new Error('Failed to convert image to base64'));
+        }
+      };
+      reader.onerror = () => reject(new Error('Failed to read image file'));
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
     try {
-      // Temporarily using mock data during development
-      // TODO: Switch to real API when ready for production
-      const useMockData = true;
-      
-      if (useMockData) {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      if (mode === 'signin') {
+        // Sign in mode - just try to get existing player
+        console.log('Signing in player:', playerData.email);
         
-        // Create mock player object
-        const newPlayer = {
-          id: `player_${Date.now()}`,
-          name: playerData.name,
-          email: playerData.email,
-          account: playerData.account,
-          image: imagePreview || null,
-          createdAt: new Date().toISOString(),
-          points: 0,
-          gems: 0,
-          badges: []
-        };
-        
-        // Store player data in localStorage
-        localStorage.setItem('currentPlayer', JSON.stringify(newPlayer));
-        
-        onPlayerCreated(newPlayer);
-        onClose();
-        
-        // Reset form
-        setPlayerData({ name: '', email: '', account: ACCOUNT_ID });
-        setImagePreview('');
-        
-        return;
+        const existingPlayerResponse = await fetch(`${gameLayerConfig.baseUrl}/players/${playerData.email}?account=${ACCOUNT_ID}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'api-key': gameLayerConfig.apiKey,
+          },
+        });
+
+        if (existingPlayerResponse.ok) {
+          const existingPlayer = await existingPlayerResponse.json();
+          console.log('Player signed in successfully:', existingPlayer);
+          onPlayerCreated(existingPlayer);
+          onClose();
+          setPlayerData({ name: '', email: '', account: ACCOUNT_ID });
+          setImagePreview('');
+          return;
+        } else {
+          throw new Error('Player not found. Please create an account first.');
+        }
       }
 
-      // Real API implementation (for production)
-      const formData = new FormData();
-      formData.append('name', playerData.name);
-      formData.append('email', playerData.email);
-      formData.append('account', playerData.account);
+      // Create mode - check if player exists first, then create if not
+      console.log('Checking if player exists before creating:', playerData.email);
       
+      try {
+        const existingPlayerResponse = await fetch(`${gameLayerConfig.baseUrl}/players/${playerData.email}?account=${ACCOUNT_ID}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'api-key': gameLayerConfig.apiKey,
+          },
+        });
+
+        if (existingPlayerResponse.ok) {
+          throw new Error('Player already exists. Please use Sign In instead.');
+        }
+      } catch (checkError) {
+        if (checkError instanceof Error && checkError.message.includes('already exists')) {
+          throw checkError;
+        }
+        console.log('Player does not exist, proceeding with creation');
+      }
+
+      // Create player with JSON (include image as base64 if present)
+      const playerPayload: any = {
+        name: playerData.name,
+        email: playerData.email,
+        player: playerData.email,
+        account: ACCOUNT_ID,
+      };
+
+      // Convert image to base64 and include in payload
       if (playerData.image) {
-        formData.append('image', playerData.image);
+        try {
+          const base64Image = await convertImageToBase64(playerData.image);
+          playerPayload.imgUrl = base64Image;
+          console.log('Image converted to base64, length:', base64Image.length);
+        } catch (imageError) {
+          console.warn('Failed to convert image to base64:', imageError);
+        }
       }
 
-      const response = await fetch(`${gameLayerConfig.baseUrl}/players`, {
-        method: 'POST',
+      console.log('Creating player with GameLayer API (JSON):', {
+        ...playerPayload,
+        hasImage: !!playerData.image,
+        endpoint: `${gameLayerConfig.baseUrl}/players?account=${ACCOUNT_ID}`,
+        ACCOUNT_ID_DEBUG: ACCOUNT_ID,
         headers: {
+          'Content-Type': 'application/json',
           'Accept': 'application/json',
           'api-key': gameLayerConfig.apiKey,
-          // Don't set Content-Type for FormData, let browser set it with boundary
-        },
-        body: formData,
+        }
       });
 
+      const response = await fetch(`${gameLayerConfig.baseUrl}/players?account=${ACCOUNT_ID}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'api-key': gameLayerConfig.apiKey,
+        },
+        body: JSON.stringify(playerPayload),
+      });
+
+      console.log('API Response status:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create player');
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        
+        let errorMessage = 'Failed to create player';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = `API Error (${response.status}): ${errorText}`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const newPlayer = await response.json();
+      console.log('Player created successfully:', newPlayer);
+      console.log('Player imgUrl field:', newPlayer.imgUrl);
       
-      // Store player data in localStorage
-      localStorage.setItem('currentPlayer', JSON.stringify(newPlayer));
-      
+      // Pass the new player to the parent component
+      // The parent will handle storing and loading real player data
       onPlayerCreated(newPlayer);
       onClose();
       
@@ -295,13 +387,16 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPla
       setImagePreview('');
       
     } catch (err) {
+      console.error('Player creation error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const isFormValid = playerData.name.trim() && playerData.email.trim() && playerData.email.includes('@');
+  const isFormValid = mode === 'signin' 
+    ? playerData.email.trim() && playerData.email.includes('@')
+    : playerData.name.trim() && playerData.email.trim() && playerData.email.includes('@');
 
   return (
     <AnimatePresence>
@@ -323,24 +418,41 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPla
             </CloseButton>
             
             <ModalTitle>Join the Adventure!</ModalTitle>
-            <ModalSubtitle>Create your player profile to start your advent calendar journey</ModalSubtitle>
+            
+            <TabContainer>
+              <Tab $active={mode === 'signin'} onClick={() => setMode('signin')}>
+                Sign In
+              </Tab>
+              <Tab $active={mode === 'create'} onClick={() => setMode('create')}>
+                Create Account
+              </Tab>
+            </TabContainer>
+            
+            <ModalSubtitle>
+              {mode === 'signin' 
+                ? 'Welcome back! Enter your email to continue your adventure.'
+                : 'Create your player profile to start your advent calendar journey.'
+              }
+            </ModalSubtitle>
             
             {error && <ErrorMessage>{error}</ErrorMessage>}
             
             <Form onSubmit={handleSubmit}>
-              <FormGroup>
-                <Label>
-                  <User size={16} />
-                  Player Name
-                </Label>
-                <Input
-                  type="text"
-                  placeholder="Enter your name"
-                  value={playerData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  required
-                />
-              </FormGroup>
+              {mode === 'create' && (
+                <FormGroup>
+                  <Label>
+                    <User size={16} />
+                    Player Name
+                  </Label>
+                  <Input
+                    type="text"
+                    placeholder="Enter your name"
+                    value={playerData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    required
+                  />
+                </FormGroup>
+              )}
               
               <FormGroup>
                 <Label>
@@ -356,46 +468,51 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPla
                 />
               </FormGroup>
               
-              <FormGroup>
-                <Label>
-                  <Upload size={16} />
-                  Profile Picture (Optional)
-                </Label>
-                <ImageUploadArea 
-                  $hasImage={!!imagePreview}
-                  onClick={() => document.getElementById('image-upload')?.click()}
-                >
-                  <ImageUploadInput
-                    id="image-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                  />
-                  {imagePreview ? (
-                    <>
-                      <ImagePreview src={imagePreview} alt="Profile preview" />
-                      <UploadText>
-                        <span className="primary">Click to change image</span>
-                      </UploadText>
-                    </>
-                  ) : (
-                    <>
-                      <Upload size={32} color="#8b5cf6" style={{ margin: '0 auto 12px' }} />
-                      <UploadText>
-                        <span className="primary">Click to upload</span> or drag and drop<br />
-                        PNG, JPG up to 5MB
-                      </UploadText>
-                    </>
-                  )}
-                </ImageUploadArea>
-              </FormGroup>
+              {mode === 'create' && (
+                <FormGroup>
+                  <Label>
+                    <Upload size={16} />
+                    Profile Picture (Optional)
+                  </Label>
+                  <ImageUploadArea 
+                    $hasImage={!!imagePreview}
+                    onClick={() => document.getElementById('image-upload')?.click()}
+                  >
+                    <ImageUploadInput
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                    />
+                    {imagePreview ? (
+                      <>
+                        <ImagePreview src={imagePreview} alt="Profile preview" />
+                        <UploadText>
+                          <span className="primary">Click to change image</span>
+                        </UploadText>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={32} color="#8b5cf6" style={{ margin: '0 auto 12px' }} />
+                        <UploadText>
+                          <span className="primary">Click to upload</span> or drag and drop<br />
+                          PNG, JPG up to 5MB
+                        </UploadText>
+                      </>
+                    )}
+                  </ImageUploadArea>
+                </FormGroup>
+              )}
               
               <SubmitButton
                 type="submit"
                 disabled={!isFormValid || isLoading}
                 whileTap={{ scale: 0.98 }}
               >
-                {isLoading ? 'Creating Player...' : 'Start My Adventure'}
+                {isLoading 
+                  ? (mode === 'signin' ? 'Signing In...' : 'Creating Account...')
+                  : (mode === 'signin' ? 'Sign In' : 'Create Account')
+                }
               </SubmitButton>
             </Form>
           </ModalContent>
