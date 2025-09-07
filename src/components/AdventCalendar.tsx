@@ -200,47 +200,6 @@ const LeaderboardPoints = styled.div`
   flex-shrink: 0;
 `;
 
-const LoadMoreButton = styled(motion.button)`
-  width: 100%;
-  padding: 12px 16px;
-  margin-top: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: white;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.15s ease-out;
-  
-  &:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
-  }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-
-const LoadingSpinner = styled.div`
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid white;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
 
 const ProfileCard = styled(motion.div)`
   background: #8b5cf6;
@@ -628,7 +587,7 @@ const PurchaseButton = styled.button<{ $canAfford: boolean; $isAvailable: boolea
 export const AdventCalendar: React.FC = () => {
   const { state, actions } = useApp();
   const { config } = useTheme();
-  const { calendar, leaderboard, rewards, user, isLoading, error, leaderboardPagination } = state;
+  const { calendar, leaderboard, rewards, user, isLoading, error } = state;
 
   const today = new Date();
   const currentDay = today.getDate();
@@ -694,10 +653,6 @@ export const AdventCalendar: React.FC = () => {
   const HorizontalLeaderboardComponent = () => {
     if (leaderboard.length === 0) return null;
 
-    const handleLoadMore = () => {
-      actions.loadMoreLeaderboard();
-    };
-
     return (
       <HorizontalLeaderboard
         initial={{ opacity: 0, y: 20 }}
@@ -709,14 +664,14 @@ export const AdventCalendar: React.FC = () => {
           December's Movers & Shakers
         </LeaderboardTitle>
         <LeaderboardScroll>
-          {leaderboard.map((entry, index) => (
+          {leaderboard.slice(0, 5).map((entry, index) => (
             <LeaderboardCard
               key={entry.user.id}
               $rank={entry.rank}
               $isCurrentUser={user?.id === entry.user.id}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, delay: 0.5 + Math.min(index, 7) * 0.1 }}
+              transition={{ duration: 0.4, delay: 0.5 + index * 0.1 }}
               whileHover={{ scale: 1.02, y: -1, transition: { duration: 0.15, ease: "easeOut" } }}
               whileTap={{ scale: 0.98 }}
             >
@@ -735,24 +690,6 @@ export const AdventCalendar: React.FC = () => {
             </LeaderboardCard>
           ))}
         </LeaderboardScroll>
-        
-        {leaderboardPagination.hasMore && (
-          <LoadMoreButton
-            onClick={handleLoadMore}
-            disabled={leaderboardPagination.isLoadingMore}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            {leaderboardPagination.isLoadingMore ? (
-              <>
-                <LoadingSpinner />
-                Loading...
-              </>
-            ) : (
-              `Load More (${leaderboardPagination.total - leaderboard.length} remaining)`
-            )}
-          </LoadMoreButton>
-        )}
       </HorizontalLeaderboard>
     );
   };
