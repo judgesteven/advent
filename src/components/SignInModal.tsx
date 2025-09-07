@@ -223,7 +223,41 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPla
     setError('');
 
     try {
-      // Create FormData for file upload
+      // Temporarily using mock data during development
+      // TODO: Switch to real API when ready for production
+      const useMockData = true;
+      
+      if (useMockData) {
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Create mock player object
+        const newPlayer = {
+          id: `player_${Date.now()}`,
+          name: playerData.name,
+          email: playerData.email,
+          account: playerData.account,
+          image: imagePreview || null,
+          createdAt: new Date().toISOString(),
+          points: 0,
+          gems: 0,
+          badges: []
+        };
+        
+        // Store player data in localStorage
+        localStorage.setItem('currentPlayer', JSON.stringify(newPlayer));
+        
+        onPlayerCreated(newPlayer);
+        onClose();
+        
+        // Reset form
+        setPlayerData({ name: '', email: '', account: ACCOUNT_ID });
+        setImagePreview('');
+        
+        return;
+      }
+
+      // Real API implementation (for production)
       const formData = new FormData();
       formData.append('name', playerData.name);
       formData.append('email', playerData.email);

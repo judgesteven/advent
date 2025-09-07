@@ -1,21 +1,17 @@
 import axios from 'axios';
-import { gameLayerConfig } from '../config/gameLayer';
+import { gameLayerConfig, API_HEADERS, ACCOUNT_ID } from '../config/gameLayer';
 import { User, Task, Badge, LeaderboardEntry, ClientConfig, CalendarDay, Reward } from '../types';
 import { MockGameLayerAPI } from './mockData';
 
 // Create axios instance with GameLayer configuration
 const api = axios.create({
   baseURL: gameLayerConfig.baseUrl,
-  headers: {
-    'Authorization': `Bearer ${gameLayerConfig.apiKey}`,
-    'Content-Type': 'application/json',
-    'X-Game-ID': gameLayerConfig.gameId,
-    'X-Client-ID': gameLayerConfig.clientId
-  }
+  headers: API_HEADERS
 });
 
-// Check if we should use mock data (when API key is not provided)
-const useMockData = !gameLayerConfig.apiKey || gameLayerConfig.apiKey === '';
+// Check if we should use mock data (when API key is not provided or in development)
+// Temporarily using mock data during development - set to false when ready for production API
+const useMockData = true; // !gameLayerConfig.apiKey || gameLayerConfig.apiKey === '' || process.env.NODE_ENV === 'development';
 
 // API service class for GameLayer integration
 export class GameLayerAPI {
