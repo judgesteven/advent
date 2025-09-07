@@ -443,8 +443,8 @@ const SeeAllButton = styled(motion.button)`
 `;
 
 const ProfileCard = styled(motion.div)`
-  background: url(${xmasPaperImg}) center/contain no-repeat #8B5CF6;
-  background-size: 166% auto;
+  background: url(${xmasPaperImg}) center no-repeat #8B5CF6;
+  background-size: cover;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 16px;
   padding: 20px;
@@ -477,8 +477,15 @@ const ProfileCard = styled(motion.div)`
     z-index: 2;
   }
   
+  /* Desktop: Use larger sizing for more detail */
+  @media (min-width: 769px) {
+    background-size: 166% auto;
+  }
+  
   @media (max-width: 768px) {
     flex: none;
+    /* Mobile: Use cover to fill entire card */
+    background-size: cover;
   }
 `;
 
