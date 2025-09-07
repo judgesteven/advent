@@ -1,33 +1,19 @@
 {
-  "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "build"
-      }
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
-  "routes": [
+  "headers": [
     {
-      "src": "/static/(.*)",
-      "headers": {
-        "cache-control": "s-maxage=31536000,immutable"
-      }
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/static/(.*)",
+      "headers": [
+        {
+          "key": "cache-control",
+          "value": "s-maxage=31536000,immutable"
+        }
+      ]
     }
-  ],
-  "functions": {
-    "app/api/**/*.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
-  "env": {
-    "REACT_APP_GAMELAYER_API_URL": "@react_app_gamelayer_api_url",
-    "REACT_APP_GAMELAYER_API_KEY": "@react_app_gamelayer_api_key"
-  }
+  ]
 }
