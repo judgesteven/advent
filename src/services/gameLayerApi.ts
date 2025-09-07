@@ -111,7 +111,7 @@ export class GameLayerAPI {
   // Real player data fetching
   static async getPlayer(playerId: string): Promise<any> {
     try {
-      const response = await fetch(`${gameLayerConfig.baseUrl}/players/${playerId}?account=${ACCOUNT_ID}`, {
+      const response = await fetch(`${gameLayerConfig.baseUrl}/players/${encodeURIComponent(playerId)}?account=${ACCOUNT_ID}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -127,6 +127,30 @@ export class GameLayerAPI {
       return await response.json();
     } catch (error) {
       console.error('Error fetching player:', error);
+      throw error;
+    }
+  }
+
+  // Update player data
+  static async updatePlayer(playerId: string, updates: { name?: string; imgUrl?: string }): Promise<any> {
+    try {
+      const response = await fetch(`${gameLayerConfig.baseUrl}/players/${encodeURIComponent(playerId)}?account=${ACCOUNT_ID}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'api-key': gameLayerConfig.apiKey,
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update player: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating player:', error);
       throw error;
     }
   }

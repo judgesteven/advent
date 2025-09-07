@@ -411,8 +411,10 @@ const AppContent: React.FC = () => {
             )}
           </CompactAvatar>
           <CompactUserInfo>
-            <CompactUserName>{displayUser.name}</CompactUserName>
-            <DropdownArrow size={12} />
+            <CompactUserName>
+              {displayUser.name}
+              <DropdownArrow size={12} />
+            </CompactUserName>
           </CompactUserInfo>
         </CompactUserProfile>
         
@@ -424,10 +426,10 @@ const AppContent: React.FC = () => {
           >
             <DropdownItem onClick={() => {
               setIsDropdownOpen(false);
-              // Add profile/settings action here if needed
+              setIsSignInModalOpen(true);
             }}>
               <User size={16} />
-              Profile
+              Update
             </DropdownItem>
             <DropdownItem onClick={() => {
               setIsDropdownOpen(false);
@@ -481,6 +483,7 @@ const AppContent: React.FC = () => {
         isOpen={isSignInModalOpen}
         onClose={handleCloseSignInModal}
         onPlayerCreated={handlePlayerCreated}
+        existingPlayer={state.currentPlayer}
       />
     </AppContainer>
   );

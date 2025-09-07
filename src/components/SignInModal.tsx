@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, User, Mail } from 'lucide-react';
@@ -8,9 +8,10 @@ interface SignInModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPlayerCreated: (player: any) => void;
+  existingPlayer?: any;
 }
 
-type ModalMode = 'signin' | 'create';
+type ModalMode = 'signin' | 'create' | 'update';
 
 interface PlayerData {
   name: string;
@@ -77,7 +78,7 @@ const ModalTitle = styled.h2`
 const TabContainer = styled.div`
   display: flex;
   background: #f3f4f6;
-  border-radius: 8px;
+  border-radius: 24px;
   padding: 4px;
   margin-bottom: 24px;
 `;
@@ -88,7 +89,7 @@ const Tab = styled.button<{ $active: boolean }>`
   background: ${props => props.$active ? '#8b5cf6' : 'transparent'};
   color: ${props => props.$active ? 'white' : '#6b7280'};
   border: none;
-  border-radius: 6px;
+  border-radius: 20px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -130,7 +131,7 @@ const Label = styled.label`
 const Input = styled.input`
   padding: 12px 16px;
   border: 2px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 24px;
   font-size: 16px;
   transition: all 0.2s;
   
@@ -147,7 +148,7 @@ const Input = styled.input`
 
 const ImageUploadArea = styled.div<{ $hasImage: boolean }>`
   border: 2px dashed ${props => props.$hasImage ? '#8b5cf6' : '#d1d5db'};
-  border-radius: 12px;
+  border-radius: 24px;
   padding: 24px;
   text-align: center;
   cursor: pointer;
@@ -188,7 +189,7 @@ const SubmitButton = styled(motion.button)`
   color: white;
   border: none;
   padding: 16px 24px;
-  border-radius: 12px;
+  border-radius: 30px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -211,20 +212,41 @@ const ErrorMessage = styled.div`
   text-align: center;
   padding: 12px;
   background: #fef2f2;
-  border-radius: 8px;
+  border-radius: 20px;
   border: 1px solid #fecaca;
 `;
 
-export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPlayerCreated }) => {
-  const [mode, setMode] = useState<ModalMode>('signin');
+export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPlayerCreated, existingPlayer }) => {
+  const [mode, setMode] = useState<ModalMode>(existingPlayer ? 'update' : 'signin');
   const [playerData, setPlayerData] = useState<PlayerData>({
-    name: '',
-    email: '',
+    name: existingPlayer?.name || '',
+    email: existingPlayer?.email || existingPlayer?.player || '',
     account: ACCOUNT_ID,
   });
-  const [imagePreview, setImagePreview] = useState<string>('');
+  const [imagePreview, setImagePreview] = useState<string>(existingPlayer?.imgUrl || '');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Update form data when existingPlayer changes
+  useEffect(() => {
+    if (existingPlayer) {
+      setMode('update');
+      setPlayerData({
+        name: existingPlayer.name || '',
+        email: existingPlayer.email || existingPlayer.player || '',
+        account: ACCOUNT_ID,
+      });
+      setImagePreview(existingPlayer.imgUrl || '');
+    } else {
+      setMode('signin');
+      setPlayerData({
+        name: '',
+        email: '',
+        account: ACCOUNT_ID,
+      });
+      setImagePreview('');
+    }
+  }, [existingPlayer]);
 
   const handleInputChange = (field: keyof PlayerData, value: string) => {
     setPlayerData(prev => ({ ...prev, [field]: value }));
@@ -266,11 +288,74 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPla
     setError('');
 
     try {
+      if (mode === 'update') {
+        // Update existing player
+        console.log('Updating player:', existingPlayer.player);
+        
+        const updatePayload: any = {
+          name: playerData.name,
+        };
+
+        // Convert image to base64 and include in payload if changed
+        if (playerData.image) {
+          try {
+            const base64Image = await convertImageToBase64(playerData.image);
+            updatePayload.imgUrl = base64Image;
+            console.log('Image converted to base64 for update, length:', base64Image.length);
+          } catch (imageError) {
+            console.warn('Failed to convert image to base64:', imageError);
+          }
+        }
+
+        console.log('Updating player with GameLayer API (PATCH):', {
+          ...updatePayload,
+          hasImage: !!playerData.image,
+          endpoint: `${gameLayerConfig.baseUrl}/players/${existingPlayer.player}?account=${ACCOUNT_ID}`,
+          playerId: existingPlayer.player,
+        });
+
+        const response = await fetch(`${gameLayerConfig.baseUrl}/players/${encodeURIComponent(existingPlayer.player)}?account=${ACCOUNT_ID}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'api-key': gameLayerConfig.apiKey,
+          },
+          body: JSON.stringify(updatePayload),
+        });
+
+        console.log('Update API Response status:', response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Update API Error Response:', errorText);
+          
+          let errorMessage = 'Failed to update player';
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.message || errorMessage;
+          } catch {
+            errorMessage = `API Error (${response.status}): ${errorText}`;
+          }
+          
+          throw new Error(errorMessage);
+        }
+
+        const updatedPlayer = await response.json();
+        console.log('Player updated successfully:', updatedPlayer);
+        
+        // Pass the updated player to the parent component
+        onPlayerCreated(updatedPlayer);
+        onClose();
+        
+        return;
+      }
+
       if (mode === 'signin') {
         // Sign in mode - just try to get existing player
         console.log('Signing in player:', playerData.email);
         
-        const existingPlayerResponse = await fetch(`${gameLayerConfig.baseUrl}/players/${playerData.email}?account=${ACCOUNT_ID}`, {
+        const existingPlayerResponse = await fetch(`${gameLayerConfig.baseUrl}/players/${encodeURIComponent(playerData.email)}?account=${ACCOUNT_ID}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -296,7 +381,7 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPla
       console.log('Checking if player exists before creating:', playerData.email);
       
       try {
-        const existingPlayerResponse = await fetch(`${gameLayerConfig.baseUrl}/players/${playerData.email}?account=${ACCOUNT_ID}`, {
+        const existingPlayerResponse = await fetch(`${gameLayerConfig.baseUrl}/players/${encodeURIComponent(playerData.email)}?account=${ACCOUNT_ID}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -396,6 +481,8 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPla
 
   const isFormValid = mode === 'signin' 
     ? playerData.email.trim() && playerData.email.includes('@')
+    : mode === 'update'
+    ? playerData.name.trim()
     : playerData.name.trim() && playerData.email.trim() && playerData.email.includes('@');
 
   return (
@@ -417,20 +504,26 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPla
               <X size={20} />
             </CloseButton>
             
-            <ModalTitle>Join the Adventure!</ModalTitle>
+            <ModalTitle>
+              {mode === 'update' ? 'Update Profile' : 'Join the Adventure!'}
+            </ModalTitle>
             
-            <TabContainer>
-              <Tab $active={mode === 'signin'} onClick={() => setMode('signin')}>
-                Sign In
-              </Tab>
-              <Tab $active={mode === 'create'} onClick={() => setMode('create')}>
-                Create Account
-              </Tab>
-            </TabContainer>
+            {mode !== 'update' && (
+              <TabContainer>
+                <Tab $active={mode === 'signin'} onClick={() => setMode('signin')}>
+                  Sign In
+                </Tab>
+                <Tab $active={mode === 'create'} onClick={() => setMode('create')}>
+                  Create Account
+                </Tab>
+              </TabContainer>
+            )}
             
             <ModalSubtitle>
               {mode === 'signin' 
                 ? 'Welcome back! Enter your email to continue your adventure.'
+                : mode === 'update'
+                ? 'Update your player name and profile picture. Your email cannot be changed.'
                 : 'Create your player profile to start your advent calendar journey.'
               }
             </ModalSubtitle>
@@ -438,7 +531,7 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPla
             {error && <ErrorMessage>{error}</ErrorMessage>}
             
             <Form onSubmit={handleSubmit}>
-              {mode === 'create' && (
+              {(mode === 'create' || mode === 'update') && (
                 <FormGroup>
                   <Label>
                     <User size={16} />
@@ -457,7 +550,7 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPla
               <FormGroup>
                 <Label>
                   <Mail size={16} />
-                  Email Address
+                  Email Address {mode === 'update' && '(Cannot be changed)'}
                 </Label>
                 <Input
                   type="email"
@@ -465,10 +558,12 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPla
                   value={playerData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   required
+                  disabled={mode === 'update'}
+                  style={mode === 'update' ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed' } : {}}
                 />
               </FormGroup>
               
-              {mode === 'create' && (
+              {(mode === 'create' || mode === 'update') && (
                 <FormGroup>
                   <Label>
                     <Upload size={16} />
@@ -510,8 +605,8 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPla
                 whileTap={{ scale: 0.98 }}
               >
                 {isLoading 
-                  ? (mode === 'signin' ? 'Signing In...' : 'Creating Account...')
-                  : (mode === 'signin' ? 'Sign In' : 'Create Account')
+                  ? (mode === 'signin' ? 'Signing In...' : mode === 'update' ? 'Updating...' : 'Creating Account...')
+                  : (mode === 'signin' ? 'Sign In' : mode === 'update' ? 'Update Profile' : 'Create Account')
                 }
               </SubmitButton>
             </Form>
