@@ -284,6 +284,7 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPla
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsLoading(true);
     setError('');
 
@@ -530,7 +531,7 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPla
             
             {error && <ErrorMessage>{error}</ErrorMessage>}
             
-            <Form onSubmit={handleSubmit}>
+            <Form onSubmit={handleSubmit} onReset={(e) => e.preventDefault()}>
               {(mode === 'create' || mode === 'update') && (
                 <FormGroup>
                   <Label>
@@ -603,6 +604,10 @@ export const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, onPla
                 type="submit"
                 disabled={!isFormValid || isLoading}
                 whileTap={{ scale: 0.98 }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }}
               >
                 {isLoading 
                   ? (mode === 'signin' ? 'Signing In...' : mode === 'update' ? 'Updating...' : 'Creating Account...')

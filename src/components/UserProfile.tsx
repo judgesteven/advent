@@ -6,12 +6,36 @@ import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 
 const ProfileContainer = styled(motion.div)`
-  background: linear-gradient(135deg, ${props => props.theme.colors.primary + '20'}, ${props => props.theme.colors.secondary + '20'});
+  background-image: url('/xmaspaper.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: local;
   border: 2px solid ${props => props.theme.colors.primary + '40'};
   border-radius: 20px;
   padding: 24px;
   margin-bottom: 24px;
   backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+  
+  /* Add overlay gradient for better text readability */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, ${props => props.theme.colors.primary + '20'}, ${props => props.theme.colors.secondary + '20'});
+    z-index: 0;
+  }
+  
+  /* Ensure content is above the overlay */
+  > * {
+    position: relative;
+    z-index: 1;
+  }
 `;
 
 const ProfileHeader = styled.div`
