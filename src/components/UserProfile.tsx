@@ -7,8 +7,8 @@ import { useTheme } from '../context/ThemeContext';
 
 const ProfileContainer = styled(motion.div)`
   background-image: url('/xmaspaper.png');
-  background-size: cover;
-  background-position: center;
+  background-size: 120% auto;
+  background-position: center center;
   background-repeat: no-repeat;
   background-attachment: local;
   border: 2px solid ${props => props.theme.colors.primary + '40'};
@@ -18,6 +18,21 @@ const ProfileContainer = styled(motion.div)`
   backdrop-filter: blur(10px);
   position: relative;
   overflow: hidden;
+  min-height: 200px;
+  
+  /* Ensure background covers entire area with fallback scaling */
+  @media (max-width: 768px) {
+    background-size: 150% auto;
+  }
+  
+  @media (max-width: 480px) {
+    background-size: 180% auto;
+  }
+  
+  /* If width is the limiting factor, scale by width */
+  @media (aspect-ratio > 1) {
+    background-size: auto 120%;
+  }
   
   /* Add overlay gradient for better text readability */
   &::before {
@@ -97,7 +112,7 @@ const StatCard = styled(motion.div)`
   background: ${props => props.theme.colors.background + '40'};
   border: 1px solid ${props => props.theme.colors.primary + '30'};
   border-radius: 12px;
-  padding: 16px;
+  padding: 20px 16px;
   text-align: center;
   backdrop-filter: blur(5px);
 `;
@@ -108,14 +123,14 @@ const StatIcon = styled.div`
   margin-bottom: 8px;
   
   svg {
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
     color: ${props => props.theme.colors.accent};
   }
 `;
 
 const StatValue = styled.div`
-  font-size: 24px;
+  font-size: 32px;
   font-weight: 700;
   color: ${props => props.theme.colors.text};
   margin-bottom: 4px;

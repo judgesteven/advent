@@ -377,7 +377,7 @@ const ModalLoadMoreButton = styled.button`
   padding: 12px 16px;
   background: #8b5cf6;
   border: 1px solid #7c3aed;
-  border-radius: 16px;
+  border-radius: 24px;
   color: white;
   font-size: 14px;
   font-weight: 600;
@@ -423,7 +423,7 @@ const SeeAllButton = styled(motion.button)`
   margin-top: 12px;
   background: #8b5cf6;
   border: 1px solid #7c3aed;
-  border-radius: 16px;
+  border-radius: 24px;
   color: white;
   font-size: 14px;
   font-weight: 600;
@@ -617,22 +617,22 @@ const ProfileBadge = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
   background: rgba(0, 0, 0, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 24px;
-  padding: 8px 12px;
-  font-size: 14px;
+  padding: 10px 16px;
+  font-size: 18px;
   font-weight: 700;
   color: white;
-  min-width: 50px;
+  min-width: 60px;
   backdrop-filter: blur(8px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   transition: all 0.15s ease-out;
   
   svg {
-    width: 16px;
-    height: 16px;
+    width: 22px;
+    height: 22px;
     flex-shrink: 0;
   }
   
@@ -921,7 +921,7 @@ const RewardStock = styled.div<{ $isLow: boolean }>`
 const PurchaseButton = styled.button<{ $canAfford: boolean; $isAvailable: boolean }>`
   width: 100%;
   padding: 12px 16px;
-  border-radius: 12px;
+  border-radius: 20px;
   border: none;
   font-size: 16px;
   font-weight: 600;
