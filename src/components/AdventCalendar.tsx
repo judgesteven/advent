@@ -218,8 +218,8 @@ const ModalOverlay = styled(motion.div)`
 `;
 
 const ModalContent = styled(motion.div)`
-  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
-  border: 1px solid #4c1d95;
+  background: white;
+  border: 1px solid #e5e7eb;
   border-radius: 20px;
   width: 100%;
   max-width: 600px;
@@ -230,14 +230,14 @@ const ModalContent = styled(motion.div)`
 
 const ModalHeader = styled.div`
   padding: 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid #e5e7eb;
   display: flex;
   align-items: center;
   justify-content: space-between;
 `;
 
 const ModalTitle = styled.h2`
-  color: white;
+  color: #1f2937;
   font-size: 24px;
   font-weight: 700;
   margin: 0;
@@ -247,21 +247,21 @@ const ModalTitle = styled.h2`
 `;
 
 const CloseButton = styled(motion.button)`
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   width: 40px;
   height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: #6b7280;
   cursor: pointer;
   transition: all 0.15s ease-out;
   
   &:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: #f3f4f6;
+    border-color: #d1d5db;
   }
 `;
 
@@ -275,126 +275,108 @@ const ModalBody = styled.div`
   }
   
   &::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
+    background: #f9fafb;
   }
   
   &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: #d1d5db;
     border-radius: 4px;
   }
   
   &::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: #9ca3af;
   }
 `;
 
 const ModalLeaderboardEntry = styled(motion.div)<{ $rank: number; $isCurrentUser?: boolean }>`
-  padding: 16px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 8px 16px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   transition: all 0.15s ease-out;
   
   ${props => props.$isCurrentUser && `
-    background: rgba(139, 92, 246, 0.2);
+    background: rgba(139, 92, 246, 0.1);
     border-color: rgba(139, 92, 246, 0.3);
   `}
   
   &:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: ${props => props.$isCurrentUser ? 
+      'rgba(139, 92, 246, 0.15)' : 
+      '#f3f4f6'};
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
   
-  &:last-child {
-    border-bottom: none;
+  @media (max-width: 768px) {
+    padding: 10px 12px;
+    gap: 10px;
   }
 `;
 
 const ModalRank = styled.div<{ $rank: number }>`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: 800;
+  min-width: 32px;
+  text-align: center;
+  color: #000000;
   flex-shrink: 0;
-  
-  ${props => {
-    if (props.$rank === 1) return `
-      background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-      color: #92400e;
-      box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
-    `;
-    if (props.$rank === 2) return `
-      background: linear-gradient(135deg, #c0c0c0 0%, #e5e7eb 100%);
-      color: #374151;
-      box-shadow: 0 0 15px rgba(192, 192, 192, 0.3);
-    `;
-    if (props.$rank === 3) return `
-      background: linear-gradient(135deg, #cd7f32 0%, #d97706 100%);
-      color: white;
-      box-shadow: 0 0 15px rgba(205, 127, 50, 0.3);
-    `;
-    return `
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    `;
-  }}
 `;
 
 const ModalAvatar = styled.div<{ $hasImage: boolean }>`
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
+  background: ${props => props.$hasImage ? 'none' : '#8b5cf6'};
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
   overflow: hidden;
-  
-  ${props => props.$hasImage ? `
-    background: transparent;
-  ` : `
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.7);
-  `}
+  border: 1px solid #e5e7eb;
+  flex-shrink: 0;
   
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
+  
+  svg {
+    width: 18px;
+    height: 18px;
+    color: white;
+  }
 `;
 
-const ModalPlayerInfo = styled.div`
-  flex: 1;
-  min-width: 0;
-`;
 
 const ModalPlayerName = styled.div`
-  color: white;
+  font-size: 18px;
   font-weight: 600;
-  font-size: 16px;
-  margin-bottom: 4px;
-  white-space: nowrap;
+  color: #1f2937;
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const ModalPlayerPoints = styled.div`
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #8b5cf6;
+  flex-shrink: 0;
 `;
 
-const ModalLoadMoreButton = styled(motion.button)`
-  width: 100%;
-  padding: 16px 24px;
-  background: rgba(255, 255, 255, 0.05);
-  border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+const ModalLoadMoreButton = styled.button`
+  width: calc(100% - 32px);
+  margin: 16px;
+  padding: 12px 16px;
+  background: #8b5cf6;
+  border: 1px solid #7c3aed;
+  border-radius: 16px;
   color: white;
   font-size: 14px;
   font-weight: 600;
@@ -406,12 +388,17 @@ const ModalLoadMoreButton = styled(motion.button)`
   transition: all 0.15s ease-out;
   
   &:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1);
+    background: #7c3aed;
+    border-color: #6d28d9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
   }
   
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
   }
 `;
 
@@ -433,9 +420,9 @@ const SeeAllButton = styled(motion.button)`
   width: 100%;
   padding: 12px 16px;
   margin-top: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  background: #8b5cf6;
+  border: 1px solid #7c3aed;
+  border-radius: 16px;
   color: white;
   font-size: 14px;
   font-weight: 600;
@@ -447,15 +434,18 @@ const SeeAllButton = styled(motion.button)`
   transition: all 0.15s ease-out;
   
   &:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: #7c3aed;
+    border-color: #6d28d9;
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
   }
 `;
 
 const ProfileCard = styled(motion.div)`
-  background: #8b5cf6;
-  border: 1px solid #7c3aed;
+  background: url('/xmaspaper.png') center/contain;
+  background-size: 166% auto;
+  background-repeat: no-repeat;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 16px;
   padding: 20px;
   display: flex;
@@ -466,6 +456,26 @@ const ProfileCard = styled(motion.div)`
   overflow: hidden;
   flex: 0 0 40%;
   color: white;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  
+  /* Optional overlay for better text readability */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    pointer-events: none;
+  }
+  
+  /* Ensure content is above overlay */
+  > * {
+    position: relative;
+    z-index: 2;
+  }
   
   @media (max-width: 768px) {
     flex: none;
@@ -473,8 +483,8 @@ const ProfileCard = styled(motion.div)`
 `;
 
 const ProfileAvatar = styled.div<{ $hasImage: boolean }>`
-  width: 160px;
-  height: 160px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
   background: ${props => props.$hasImage ? 'none' : 'rgba(255, 255, 255, 0.2)'};
   display: flex;
@@ -598,6 +608,7 @@ const RewardsSection = styled(motion.div)`
   padding: 20px;
   margin-bottom: 32px;
   overflow: hidden;
+  position: relative;
 `;
 
 const RewardsTitle = styled.div`
@@ -654,6 +665,44 @@ const CalendarSectionTitle = styled.div`
   }
 `;
 
+
+const RewardsGridWrapper = styled.div`
+  position: relative;
+  
+  /* Gradient fade indicator on the right */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 40px;
+    height: 100%;
+    background: linear-gradient(to right, transparent, #ffffff);
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  /* Scroll indicator arrow */
+  &::before {
+    content: '→';
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    color: #6b7280;
+    font-size: 18px;
+    font-weight: bold;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0.7;
+    animation: scrollHint 2s ease-in-out infinite;
+  }
+  
+  @keyframes scrollHint {
+    0%, 100% { transform: translateY(-50%) translateX(0); opacity: 0.7; }
+    50% { transform: translateY(-50%) translateX(4px); opacity: 1; }
+  }
+`;
 
 const RewardsGrid = styled.div`
   display: flex;
@@ -958,8 +1007,7 @@ export const AdventCalendar: React.FC = () => {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
-          <Trophy size={16} />
-          See All Players
+          Load More
         </SeeAllButton>
       </HorizontalLeaderboard>
     );
@@ -1018,13 +1066,11 @@ export const AdventCalendar: React.FC = () => {
                   {entry.user.avatar ? (
                     <img src={entry.user.avatar} alt={entry.user.name} />
                   ) : (
-                    <User size={20} />
+                    <User size={18} />
                   )}
                 </ModalAvatar>
-                <ModalPlayerInfo>
-                  <ModalPlayerName>{entry.user.name}</ModalPlayerName>
-                  <ModalPlayerPoints>{entry.points.toLocaleString()} points</ModalPlayerPoints>
-                </ModalPlayerInfo>
+                <ModalPlayerName>{entry.user.name}</ModalPlayerName>
+                <ModalPlayerPoints>{entry.points.toLocaleString()}</ModalPlayerPoints>
               </ModalLeaderboardEntry>
             ))}
             
@@ -1032,8 +1078,6 @@ export const AdventCalendar: React.FC = () => {
               <ModalLoadMoreButton
                 onClick={handleLoadMore}
                 disabled={modalLeaderboardPagination.isLoadingMore}
-                whileHover={{ scale: modalLeaderboardPagination.isLoadingMore ? 1 : 1.02 }}
-                whileTap={{ scale: modalLeaderboardPagination.isLoadingMore ? 1 : 0.98 }}
               >
                 {modalLeaderboardPagination.isLoadingMore ? (
                   <>
@@ -1048,6 +1092,13 @@ export const AdventCalendar: React.FC = () => {
                 )}
               </ModalLoadMoreButton>
             )}
+            
+            {/* Debug info - remove this later */}
+            <div style={{ color: 'white', padding: '16px', fontSize: '12px', opacity: 0.7 }}>
+              Debug: hasMore={modalLeaderboardPagination.hasMore ? 'true' : 'false'}, 
+              total={modalLeaderboardPagination.total}, 
+              loaded={modalLeaderboard.length}
+            </div>
           </ModalBody>
         </ModalContent>
       </ModalOverlay>
@@ -1072,7 +1123,8 @@ export const AdventCalendar: React.FC = () => {
           <Gift size={20} />
           Exchange Your Gems for Cool Stuff
         </RewardsTitle>
-        <RewardsGrid>
+        <RewardsGridWrapper>
+          <RewardsGrid>
           {rewards.map((reward, index) => {
             const canAfford = user ? user.gems >= reward.gemCost : false;
             const isLowStock = reward.stock <= 3 && reward.stock > 0;
@@ -1109,7 +1161,8 @@ export const AdventCalendar: React.FC = () => {
               </RewardCard>
             );
           })}
-        </RewardsGrid>
+          </RewardsGrid>
+        </RewardsGridWrapper>
       </RewardsSection>
     );
   };

@@ -148,7 +148,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       const calendar = await withErrorHandling(() => GameLayerAPI.getCalendarData());
       dispatch({ type: 'SET_CALENDAR', payload: calendar });
 
-      // Load leaderboard (top 5 entries)
+      // Load leaderboard (top 5 entries for home page)
       const leaderboardData = await withErrorHandling(() => GameLayerAPI.getLeaderboard(5, 0));
       dispatch({ type: 'SET_LEADERBOARD', payload: leaderboardData.entries });
 
