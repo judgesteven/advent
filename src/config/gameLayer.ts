@@ -30,7 +30,7 @@ export const defaultClientConfig: ClientConfig = {
   textColor: '#1f2937',
   fontFamily: 'Inter, system-ui, sans-serif',
   calendarTitle: 'Advent Adventure 2025',
-  welcomeMessage: 'Unwrap a new challenge every day, collect shiny gems and trade them for awesome prizes ... Can you make it into the Top25?!',
+  welcomeMessage: 'Unwrap a new challenge every day, collect shiny gems, and trade them in for awesome prizes all month long ... Can you make it into the Top 25?!',
   completionMessage: 'Congratulations! You\'ve completed your advent calendar journey!',
   socialLinks: {
     website: 'https://example.com',
