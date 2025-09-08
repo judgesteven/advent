@@ -464,12 +464,14 @@ const AppContent: React.FC = () => {
 
       <Footer>
         <FooterContent>
-          <span style={{ fontSize: '12px', color: '#6b7280' }}>© 2025 All Rights Reserved</span>
+          <div></div>
           
           <FooterLogo>
             <img src="/logo.png" alt="Logo" />
             <span>POWERED BY GAMELAYER</span>
           </FooterLogo>
+          
+          <span style={{ fontSize: '12px', color: '#6b7280', justifySelf: 'end' }}>© 2025 All Rights Reserved</span>
         </FooterContent>
       </Footer>
 
