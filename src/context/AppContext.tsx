@@ -269,8 +269,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       dispatch({ 
         type: 'SET_MODAL_LEADERBOARD_PAGINATION', 
         payload: { 
-          hasMore: leaderboardData.hasMore, 
-          total: leaderboardData.total, 
+          hasMore: leaderboardData.hasMore && leaderboardData.entries.length < 25, 
+          total: Math.min(leaderboardData.total, 25), 
           isLoadingMore: false,
           currentPage: 1
         } 
@@ -281,7 +281,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   const loadMoreModalLeaderboard = async () => {
-    if (state.modalLeaderboardPagination.isLoadingMore || !state.modalLeaderboardPagination.hasMore) {
+    if (state.modalLeaderboardPagination.isLoadingMore || !state.modalLeaderboardPagination.hasMore || state.modalLeaderboard.length >= 25) {
       return;
     }
 
@@ -295,14 +295,22 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       });
 
       const offset = state.modalLeaderboard.length;
-      const leaderboardData = await withErrorHandling(() => GameLayerAPI.getLeaderboard(10, offset));
+      const remainingSlots = 25 - state.modalLeaderboard.length;
+      const limit = Math.min(10, remainingSlots);
       
-      dispatch({ type: 'APPEND_MODAL_LEADERBOARD', payload: leaderboardData.entries });
+      const leaderboardData = await withErrorHandling(() => GameLayerAPI.getLeaderboard(limit, offset));
+      
+      // Only take entries that fit within the 25 limit
+      const entriesToAdd = leaderboardData.entries.slice(0, remainingSlots);
+      
+      dispatch({ type: 'APPEND_MODAL_LEADERBOARD', payload: entriesToAdd });
+      
+      const newTotal = state.modalLeaderboard.length + entriesToAdd.length;
       dispatch({ 
         type: 'SET_MODAL_LEADERBOARD_PAGINATION', 
         payload: { 
-          hasMore: leaderboardData.hasMore, 
-          total: leaderboardData.total, 
+          hasMore: leaderboardData.hasMore && newTotal < 25, 
+          total: Math.min(leaderboardData.total, 25), 
           isLoadingMore: false,
           currentPage: state.modalLeaderboardPagination.currentPage + 1
         } 

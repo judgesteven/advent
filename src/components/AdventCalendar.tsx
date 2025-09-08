@@ -1153,7 +1153,7 @@ export const AdventCalendar: React.FC = () => {
           <ModalHeader>
             <ModalTitle>
               <Trophy size={24} />
-              Full Leaderboard
+              Top 25 Leaderboard
             </ModalTitle>
             <CloseButton
               onClick={handleCloseLeaderboardModal}
@@ -1202,7 +1202,7 @@ export const AdventCalendar: React.FC = () => {
                 ) : (
                   <>
                     <ChevronDown size={16} />
-                    Load More ({modalLeaderboardPagination.total - modalLeaderboard.length} remaining)
+                    Load More
                   </>
                 )}
               </ModalLoadMoreButton>
